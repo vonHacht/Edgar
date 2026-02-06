@@ -2,15 +2,16 @@
 {
     public class Firm
     {
-        /// <summary>
-        /// 10-digit zero-padded CIK string, e.g. "0000320193".
-        /// </summary>
-        public string Cik10 { get; set; } = string.Empty;
-            
-        public string? Ticker { get; set; }
-        public string? Name { get; set; }
+        public string? CIK { get; set; }
 
-        // If you later merge with Compustat:
+        public string? LatestCompanyName { get; set; }
+        public bool NameChanged { get; set; }
+
+        public int NameVariants { get; set; }
+        public string? AllNames { get; set; }
+
+        public string? Ticker { get; set; }
+
         public string? Gvkey { get; set; }
     }
 }

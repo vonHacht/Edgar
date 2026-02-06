@@ -1,3 +1,4 @@
 <Solution>
   <Project Path="Edgar/Edgar.csproj" />
+  <Project Path="TestEdgar/TestEdgar.csproj" Id="d60cee4a-1015-41fb-9511-8de365b77799" />
 </Solution>

@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using System.IO;
 
 namespace Edgar.Config
@@ -16,6 +14,8 @@ namespace Edgar.Config
         public string ProcessedDir { get; init; }
         public string DictDir { get; init; }
         public string OutputDir { get; init; }
+        public string CompaniesDir { get; init; }
+        public string MappingsDir { get; init; }
 
         // ----------------------------
         // Sample period
@@ -27,7 +27,7 @@ namespace Edgar.Config
         // SEC / EDGAR settings
         // ----------------------------
         public string UserAgent { get; init; }
-        public int RequestDelayMs { get; init; } = 200; // be polite to SEC
+        public int RequestDelayMs { get; init; } = 200;
 
         // ----------------------------
         // Extraction options
@@ -42,13 +42,17 @@ namespace Edgar.Config
 
         private AppSettings() { }
 
+        // ✅ Production-friendly entry point
         public static AppSettings Load()
         {
-            // Assume project is run from /bin/Debug/... → go up to project root
-            var projectRoot = Path.GetFullPath(
-                Path.Combine(AppContext.BaseDirectory, "..", "..", "..")
-            );
+            var projectRoot = ResolveProjectRootFromBaseDirectory();
+            return Load(projectRoot);
+        }
 
+        // ✅ Test-friendly / explicit entry point
+        public static AppSettings Load(string projectRoot)
+        {
+            projectRoot = Path.GetFullPath(projectRoot);
             var dataDir = Path.Combine(projectRoot, "Data");
 
             var settings = new AppSettings
@@ -59,13 +63,22 @@ namespace Edgar.Config
                 ProcessedDir = Path.Combine(dataDir, "processed"),
                 DictDir = Path.Combine(dataDir, "dictionaries"),
                 OutputDir = Path.Combine(projectRoot, "output"),
+                CompaniesDir = Path.Combine(dataDir, "companies"),
+                MappingsDir = Path.Combine(dataDir, "mappings"),
 
-                // IMPORTANT: replace with your real contact info
                 UserAgent = "Edgar/1.0 (contact: your.email@university.edu)"
             };
 
             settings.EnsureDirectories();
             return settings;
+        }
+
+        private static string ResolveProjectRootFromBaseDirectory()
+        {
+            // bin/Debug/netX.Y → project root
+            return Path.GetFullPath(
+                Path.Combine(AppContext.BaseDirectory, "..", "..", "..")
+            );
         }
 
         private void EnsureDirectories()
@@ -75,6 +88,8 @@ namespace Edgar.Config
             Directory.CreateDirectory(ProcessedDir);
             Directory.CreateDirectory(DictDir);
             Directory.CreateDirectory(OutputDir);
+            Directory.CreateDirectory(CompaniesDir);
+            Directory.CreateDirectory(MappingsDir);
         }
     }
 }

@@ -1,14 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
-
+﻿using Edgar.Companies;
 using Edgar.Config;
 using Edgar.Edgar;
 using Edgar.Export;
-using Edgar.Parsing;
+using Edgar.Linking;
 using Edgar.Models;
+using Edgar.Parsing;
 using Edgar.TextMeasures;
 
 namespace Edgar.Pipeline
@@ -16,17 +12,25 @@ namespace Edgar.Pipeline
     public class PanelBuilder
     {
         private readonly AppSettings _settings;
+        private readonly CompaniesService _companiesService;
+
         private readonly EdgarClient _edgarClient;
         private readonly FilingIndexService _indexService;
         private readonly FilingDownloader _downloader;
+
         private readonly ItemSectionExtractor _extractor;
         private readonly LmDictionaryScorer _dictionaryScorer;
+
         private readonly CsvExporter _exporter;
+        private readonly CikLinker _linker;
 
         public PanelBuilder()
         {
             // Configuration
             _settings = AppSettings.Load();
+
+            // Firms
+            _companiesService = new CompaniesService(_settings);
 
             // EDGAR
             _edgarClient = new EdgarClient(_settings);
@@ -50,7 +54,7 @@ namespace Edgar.Pipeline
 
             foreach (var firm in firms)
             {
-                Console.WriteLine($"Processing firm {firm.Cik10}");
+                Console.WriteLine($"Processing firm {firm.CIK}");
 
                 var filings = await _indexService.Get10KFilingsAsync(
                     firm,
@@ -63,15 +67,29 @@ namespace Edgar.Pipeline
                     try
                     {
                         var row = await ProcessFilingAsync(firm, filing);
-                        if (row != null)
-                            panelRows.Add(row);
+                        if (row == null)
+                            continue;
+
+                        // Attach CUSIP / GVKEY / PERMNO (date-aware)
+                        _linker.AttachLinks(row);
+
+                        panelRows.Add(row);
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"Error {firm.Cik10} {filing.AccessionNumber}: {ex.Message}");
+                        Console.WriteLine(
+                            $"Error {firm.CIK} {filing.AccessionNumber}: {ex.Message}"
+                        );
                     }
                 }
             }
+
+            // OPTIONAL but recommended:
+            // enforce "first filing per firm-year"
+            panelRows = panelRows
+                .GroupBy(r => (r.Cik10, r.Year))
+                .Select(g => g.OrderBy(r => r.FilingDate).First())
+                .ToList();
 
             var outputPath = Path.Combine(_settings.OutputDir, "risk_panel.csv");
             await _exporter.WriteAsync(panelRows, outputPath);
@@ -81,24 +99,30 @@ namespace Edgar.Pipeline
 
         private async Task<PanelRow?> ProcessFilingAsync(Firm firm, Filing filing)
         {
-            // 1. Download filing HTML (cached)
+            // 1) Download filing HTML (cached)
             var htmlPath = await _downloader.GetOrDownloadPrimaryDocAsync(filing);
             var html = await File.ReadAllTextAsync(htmlPath);
 
-            // 2. Clean + extract sections
+            // 2) Clean + extract sections
             var cleanedText = HtmlCleaner.HtmlToText(html);
             var sections = _extractor.Extract(cleanedText, _settings.ExtractItem7);
 
-            if (!sections.FoundItem1A || sections.WordCountItem1A < 200)
-                return null; // basic quality filter
+            // Basic quality filters (EDGAR-only)
+            if (!sections.FoundItem1A)
+                return null;
 
-            // 3. Dictionary-based scores
+            if (sections.WordCountItem1A < 200)
+                return null;
+
+            // 3) Dictionary-based scores
             var dictScores = _dictionaryScorer.Score(sections.Item1AText);
 
-            // 4. Build panel row
+            // 4) Build panel row
             return new PanelRow
             {
-                Cik10 = firm.Cik10,
+                Cik10 = firm.CIK ?? string.Empty,
+                Ticker = firm.Ticker,
+
                 AccessionNumber = filing.AccessionNumber,
                 FilingDate = filing.FilingDate,
                 Year = filing.FilingDate.Year,
@@ -112,19 +136,21 @@ namespace Edgar.Pipeline
                 NegativeFrequency = dictScores.NegativeFrequency,
 
                 UncertaintyCount = dictScores.UncertaintyCount,
-                UncertaintyFrequency = dictScores.UncertaintyFrequency
+                UncertaintyFrequency = dictScores.UncertaintyFrequency,
+
+                LocalHtmlPath = htmlPath
             };
         }
 
         private List<Firm> LoadFirms()
         {
-            // START SMALL: hardcode a few CIKs first
+            // For now: hardcoded test firms
+            // Later: replace with _companiesService.LoadFirms()
             return new List<Firm>
             {
-                new Firm { Cik10 = "0000320193" }, // Apple
-                new Firm { Cik10 = "0000789019" }  // Microsoft
+                new Firm { CIK = "0000320193", Ticker = "AAPL" },
+                new Firm { CIK = "0000789019", Ticker = "MSFT" }
             };
         }
     }
 }
-

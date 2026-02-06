@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.NetworkInformation;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -31,14 +32,14 @@ namespace Edgar.Edgar
             CancellationToken ct = default)
         {
             if (firm == null) throw new ArgumentNullException(nameof(firm));
-            if (string.IsNullOrWhiteSpace(firm.Cik10)) throw new ArgumentException("Firm.Cik10 is required.");
+            if (string.IsNullOrWhiteSpace(firm.CIK)) throw new ArgumentException("Firm.CIK is required.");
 
-            var submissionsUrl = BuildSubmissionsUrl(firm.Cik10);
+            var submissionsUrl = BuildSubmissionsUrl(firm.CIK);
             var json = await _client.GetStringAsync(submissionsUrl, ct);
 
             using var doc = JsonDocument.Parse(json);
 
-            var filings = ParseRecentFilings(doc, firm.Cik10);
+            var filings = ParseRecentFilings(doc, firm.CIK);
 
             // Filter forms
             var allowedForms = includeAmendments
