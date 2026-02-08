@@ -2,7 +2,6 @@
 using Edgar.Config;
 using Edgar.Edgar;
 using Edgar.Export;
-using Edgar.Linking;
 using Edgar.Models;
 using Edgar.Parsing;
 using Edgar.TextMeasures;
@@ -22,7 +21,7 @@ namespace Edgar.Pipeline
         private readonly LmDictionaryScorer _dictionaryScorer;
 
         private readonly CsvExporter _exporter;
-        private readonly CikLinker _linker;
+        //private readonly CikLinker _linker;
 
         public PanelBuilder()
         {
@@ -71,7 +70,7 @@ namespace Edgar.Pipeline
                             continue;
 
                         // Attach CUSIP / GVKEY / PERMNO (date-aware)
-                        _linker.AttachLinks(row);
+                        //_linker.AttachLinks(row);
 
                         panelRows.Add(row);
                     }

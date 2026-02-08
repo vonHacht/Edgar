@@ -64,7 +64,7 @@ namespace Edgar.Config
                 DictDir = Path.Combine(dataDir, "dictionaries"),
                 OutputDir = Path.Combine(projectRoot, "output"),
                 CompaniesDir = Path.Combine(dataDir, "companies"),
-                MappingsDir = Path.Combine(dataDir, "mappings"),
+                //MappingsDir = Path.Combine(dataDir, "mappings"),
 
                 UserAgent = "Edgar/1.0 (contact: your.email@university.edu)"
             };
@@ -89,7 +89,7 @@ namespace Edgar.Config
             Directory.CreateDirectory(DictDir);
             Directory.CreateDirectory(OutputDir);
             Directory.CreateDirectory(CompaniesDir);
-            Directory.CreateDirectory(MappingsDir);
+            //Directory.CreateDirectory(MappingsDir);
         }
     }
 }

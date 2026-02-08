@@ -18,7 +18,6 @@ namespace TestEdgar
             _appSettings = AppSettings.Load(_edgarRoot);
 
             _companyService = new CompaniesService(_appSettings);
-
         }
     }
 }

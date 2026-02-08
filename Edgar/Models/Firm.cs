@@ -13,5 +13,7 @@
         public string? Ticker { get; set; }
 
         public string? Gvkey { get; set; }
+
+        public List<CrspDailyRecord> CRSP { get; set; } = new List<CrspDailyRecord>();
     }
 }

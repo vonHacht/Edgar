@@ -1,31 +1,41 @@
 ﻿using CsvHelper;
 using CsvHelper.Configuration;
 using Edgar.Config;
-using Edgar.Edgar;
-using Edgar.Export;
 using Edgar.Models;
-using Edgar.Parsing;
-using Edgar.TextMeasures;
-using System;
-using System.Collections.Generic;
-using System.Formats.Asn1;
 using System.Globalization;
-using System.Runtime;
-using System.Text;
 
 namespace Edgar.Companies
 {
     public class CompaniesService
     {
-        private readonly string filename = "samples_2010_2023.csv";
+        private const string SamplesFileName = "samples_2010_2023.csv";
+        private const string ReturnsFileName = "returns_2010_2023.csv";
 
-        private List<Firm> _edgarCompanies;
+        private readonly List<Firm> _firms = new();
 
-        //private List<...> _crspCompanies;
-
-        public CompaniesService(AppSettings _settings)
+        public CompaniesService(AppSettings settings)
         {
-            var companiesFilepath = Path.Combine(_settings.CompaniesDir, filename);
+            if (settings == null) throw new ArgumentNullException(nameof(settings));
+
+            var samplesPath = Path.Combine(settings.CompaniesDir, SamplesFileName);
+            var returnsPath = Path.Combine(settings.CompaniesDir, ReturnsFileName);
+
+            _firms = ReadSamples(samplesPath);
+
+            // Optional: only load returns if you actually need them in memory
+            // This attaches returns to firms if Firm.Permno matches.
+            AttachReturnsToFirms(returnsPath, _firms);
+        }
+
+        public List<Firm> LoadFirms() => _firms;
+
+        // ----------------------------
+        // Read samples (firm list)
+        // ----------------------------
+        private static List<Firm> ReadSamples(string samplesFilePath)
+        {
+            if (!File.Exists(samplesFilePath))
+                throw new FileNotFoundException($"Samples file not found: {samplesFilePath}");
 
             var config = new CsvConfiguration(CultureInfo.InvariantCulture)
             {
@@ -38,16 +48,55 @@ namespace Edgar.Companies
                 HeaderValidated = null
             };
 
-            using var reader = new StreamReader(companiesFilepath);
+            using var reader = new StreamReader(samplesFilePath);
             using var csv = new CsvReader(reader, config);
 
-            _edgarCompanies = csv.GetRecords<Firm>().ToList();
+            return csv.GetRecords<Firm>().ToList();
         }
-    
 
-    public List<Firm> LoadFirms()
+        // ----------------------------
+        // Attach CRSP daily returns
+        // ----------------------------
+        private static void AttachReturnsToFirms(string returnsFilePath, List<Firm> firms)
         {
-            return _edgarCompanies;
+            if (!File.Exists(returnsFilePath))
+                throw new FileNotFoundException($"Returns file not found: {returnsFilePath}");
+
+            // Build fast lookup: Permno -> Firm
+            // (Best practice: link on PERMNO, not company name)
+            /*var byPermno = firms
+                .Where(f => f.Permno.HasValue)
+                .GroupBy(f => f.Permno!.Value)
+                .ToDictionary(g => g.Key, g => g.ToList());*/
+
+            var config = new CsvConfiguration(CultureInfo.InvariantCulture)
+            {
+                Delimiter = ",",
+                HasHeaderRecord = true,
+                TrimOptions = TrimOptions.Trim,
+                IgnoreBlankLines = true,
+                PrepareHeaderForMatch = args => args.Header.Replace("\uFEFF", "").Trim(),
+                MissingFieldFound = null,
+                HeaderValidated = null
+            };
+
+            using var reader = new StreamReader(returnsFilePath);
+            using var csv = new CsvReader(reader, config);
+
+            foreach (var rec in csv.GetRecords<CrspDailyRecord>())
+            {
+                /*if (!byPermno.TryGetValue(rec.Permno, out var firmList))
+                    continue;*/
+
+                // Attach to every firm sharing this PERMNO (rare but safe)
+                /*foreach (var firm in firmList)
+                {
+                    //firm.CRSP ??= new List<CrspDailyRecord>();
+                    firm.CRSP.Add(rec);
+                }*/
+
+                Console.WriteLine("..");
+            }
         }
     }
 }

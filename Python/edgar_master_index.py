@@ -193,17 +193,18 @@ if __name__ == "__main__":
                         if form not in FORMS:
                             continue
 
-                        cusip = extract_cusip_from_filing(
-                            session=session,
-                            filename=filename,
-                            cache=cusip_cache,
-                            last_request_time=last_request_time,
-                        )
+                        # Does not work
+                        #cusip = extract_cusip_from_filing(
+                        #    session=session,
+                        #    filename=filename,
+                        #    cache=cusip_cache,
+                        #    last_request_time=last_request_time,
+                        #)
 
                         writer.writerow([
                             name,
                             cik.zfill(10),
-                            cusip,
+                            "",
                             form,
                             date_filed,
                             filename
@@ -214,7 +215,7 @@ if __name__ == "__main__":
                         if wrote % PRINT_EVERY_N_FILINGS == 0:
                             print(
                                 f"  🧾 {wrote:,} filings processed "
-                                f"(CUSIP cache size: {len(cusip_cache):,})"
+                           #     f"(CUSIP cache size: {len(cusip_cache):,})"
                             )
 
                 print(f"  ✅ Finished {year} Q{quarter}: {wrote:,} 10-Ks written")
