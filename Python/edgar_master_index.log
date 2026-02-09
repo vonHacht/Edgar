@@ -13876,3 +13876,292 @@
 2026-02-05 19:55:48,380 DEBUG connectionpool.py _make_request https://www.sec.gov:443 "GET /Archives/edgar/data/1000228/0001000228-10-000006.txt HTTP/1.1" 200 245637
 2026-02-05 19:55:50,462 DEBUG connectionpool.py _make_request https://www.sec.gov:443 "GET /Archives/edgar/data/1000229/0001000229-10-000004.txt HTTP/1.1" 200 719799
 2026-02-05 19:55:52,993 DEBUG connectionpool.py _make_request https://www.sec.gov:443 "GET /Archives/edgar/data/1000230/0001193125-10-017031.txt HTTP/1.1" 200 848563
+2026-02-09 10:36:46,388 INFO edgar_master_index.py <module> logging enabled
+2026-02-09 10:36:46,389 INFO edgar_master_index.py <module> Processing 2010 Q1...
+2026-02-09 10:36:46,389 INFO edgar_master_index.py download_master_index Downloading https://www.sec.gov/Archives/edgar/full-index/2010/QTR1/master.idx
+2026-02-09 10:36:46,397 DEBUG connectionpool.py _new_conn Starting new HTTPS connection (1): www.sec.gov:443
+2026-02-09 10:36:46,951 DEBUG connectionpool.py _make_request https://www.sec.gov:443 "GET /Archives/edgar/full-index/2010/QTR1/master.idx HTTP/1.1" 200 3879658
+2026-02-09 10:36:59,133 DEBUG api.py from_bytes Encoding detection: ascii is most likely the one.
+2026-02-09 10:41:10,374 INFO edgar_master_index.py <module> logging enabled
+2026-02-09 10:41:10,380 DEBUG connectionpool.py _new_conn Starting new HTTPS connection (1): www.sec.gov:443
+2026-02-09 10:41:10,836 DEBUG connectionpool.py _make_request https://www.sec.gov:443 "GET /files/company_tickers.json HTTP/1.1" 200 219330
+2026-02-09 10:41:10,900 INFO edgar_master_index.py <module> Processing 2010 Q1...
+2026-02-09 10:41:10,900 INFO edgar_master_index.py download_master_index Downloading https://www.sec.gov/Archives/edgar/full-index/2010/QTR1/master.idx
+2026-02-09 10:41:11,115 DEBUG connectionpool.py _make_request https://www.sec.gov:443 "GET /Archives/edgar/full-index/2010/QTR1/master.idx HTTP/1.1" 200 3879658
+2026-02-09 10:41:11,307 DEBUG api.py from_bytes Encoding detection: ascii is most likely the one.
+2026-02-09 10:41:11,693 INFO edgar_master_index.py <module> Wrote 5936 rows to output\edgar_10k_2010_Q1.csv
+2026-02-09 10:41:11,894 INFO edgar_master_index.py <module> Processing 2010 Q2...
+2026-02-09 10:41:11,894 INFO edgar_master_index.py download_master_index Downloading https://www.sec.gov/Archives/edgar/full-index/2010/QTR2/master.idx
+2026-02-09 10:41:12,072 DEBUG connectionpool.py _make_request https://www.sec.gov:443 "GET /Archives/edgar/full-index/2010/QTR2/master.idx HTTP/1.1" 200 3308166
+2026-02-09 10:41:12,374 DEBUG api.py from_bytes Encoding detection: ascii is most likely the one.
+2026-02-09 10:41:12,714 INFO edgar_master_index.py <module> Wrote 1539 rows to output\edgar_10k_2010_Q2.csv
+2026-02-09 10:41:12,914 INFO edgar_master_index.py <module> Processing 2010 Q3...
+2026-02-09 10:41:12,914 INFO edgar_master_index.py download_master_index Downloading https://www.sec.gov/Archives/edgar/full-index/2010/QTR3/master.idx
+2026-02-09 10:41:13,137 DEBUG connectionpool.py _make_request https://www.sec.gov:443 "GET /Archives/edgar/full-index/2010/QTR3/master.idx HTTP/1.1" 200 2767947
+2026-02-09 10:41:13,537 DEBUG api.py from_bytes Encoding detection: ascii is most likely the one.
+2026-02-09 10:41:13,810 INFO edgar_master_index.py <module> Wrote 808 rows to output\edgar_10k_2010_Q3.csv
+2026-02-09 10:41:14,010 INFO edgar_master_index.py <module> Processing 2010 Q4...
+2026-02-09 10:41:14,011 INFO edgar_master_index.py download_master_index Downloading https://www.sec.gov/Archives/edgar/full-index/2010/QTR4/master.idx
+2026-02-09 10:41:14,344 DEBUG connectionpool.py _make_request https://www.sec.gov:443 "GET /Archives/edgar/full-index/2010/QTR4/master.idx HTTP/1.1" 200 None
+2026-02-09 10:41:15,051 DEBUG api.py from_bytes Encoding detection: ascii is most likely the one.
+2026-02-09 10:41:15,325 INFO edgar_master_index.py <module> Wrote 882 rows to output\edgar_10k_2010_Q4.csv
+2026-02-09 10:41:15,526 INFO edgar_master_index.py <module> Processing 2011 Q1...
+2026-02-09 10:41:15,526 INFO edgar_master_index.py download_master_index Downloading https://www.sec.gov/Archives/edgar/full-index/2011/QTR1/master.idx
+2026-02-09 10:41:15,740 DEBUG connectionpool.py _make_request https://www.sec.gov:443 "GET /Archives/edgar/full-index/2011/QTR1/master.idx HTTP/1.1" 200 3930754
+2026-02-09 10:41:16,595 DEBUG api.py from_bytes Encoding detection: ascii is most likely the one.
+2026-02-09 10:41:16,999 INFO edgar_master_index.py <module> Wrote 5811 rows to output\edgar_10k_2011_Q1.csv
+2026-02-09 10:41:17,200 INFO edgar_master_index.py <module> Processing 2011 Q2...
+2026-02-09 10:41:17,200 INFO edgar_master_index.py download_master_index Downloading https://www.sec.gov/Archives/edgar/full-index/2011/QTR2/master.idx
+2026-02-09 10:41:17,418 DEBUG connectionpool.py _make_request https://www.sec.gov:443 "GET /Archives/edgar/full-index/2011/QTR2/master.idx HTTP/1.1" 200 3382176
+2026-02-09 10:41:17,535 DEBUG api.py from_bytes Encoding detection: ascii is most likely the one.
+2026-02-09 10:41:17,881 INFO edgar_master_index.py <module> Wrote 1413 rows to output\edgar_10k_2011_Q2.csv
+2026-02-09 10:41:18,081 INFO edgar_master_index.py <module> Processing 2011 Q3...
+2026-02-09 10:41:18,081 INFO edgar_master_index.py download_master_index Downloading https://www.sec.gov/Archives/edgar/full-index/2011/QTR3/master.idx
+2026-02-09 10:41:18,276 DEBUG connectionpool.py _make_request https://www.sec.gov:443 "GET /Archives/edgar/full-index/2011/QTR3/master.idx HTTP/1.1" 200 2801619
+2026-02-09 10:41:18,392 DEBUG api.py from_bytes Encoding detection: ascii is most likely the one.
+2026-02-09 10:41:18,651 INFO edgar_master_index.py <module> Wrote 806 rows to output\edgar_10k_2011_Q3.csv
+2026-02-09 10:41:18,852 INFO edgar_master_index.py <module> Processing 2011 Q4...
+2026-02-09 10:41:18,852 INFO edgar_master_index.py download_master_index Downloading https://www.sec.gov/Archives/edgar/full-index/2011/QTR4/master.idx
+2026-02-09 10:41:19,056 DEBUG connectionpool.py _make_request https://www.sec.gov:443 "GET /Archives/edgar/full-index/2011/QTR4/master.idx HTTP/1.1" 200 2739377
+2026-02-09 10:41:19,209 DEBUG api.py from_bytes Encoding detection: utf_8 is most likely the one.
+2026-02-09 10:41:19,477 INFO edgar_master_index.py <module> Wrote 810 rows to output\edgar_10k_2011_Q4.csv
+2026-02-09 10:41:19,678 INFO edgar_master_index.py <module> Processing 2012 Q1...
+2026-02-09 10:41:19,678 INFO edgar_master_index.py download_master_index Downloading https://www.sec.gov/Archives/edgar/full-index/2012/QTR1/master.idx
+2026-02-09 10:41:19,903 DEBUG connectionpool.py _make_request https://www.sec.gov:443 "GET /Archives/edgar/full-index/2012/QTR1/master.idx HTTP/1.1" 200 3957108
+2026-02-09 10:41:20,061 DEBUG api.py from_bytes Encoding detection: ascii is most likely the one.
+2026-02-09 10:41:20,481 INFO edgar_master_index.py <module> Wrote 5577 rows to output\edgar_10k_2012_Q1.csv
+2026-02-09 10:41:20,681 INFO edgar_master_index.py <module> Processing 2012 Q2...
+2026-02-09 10:41:20,681 INFO edgar_master_index.py download_master_index Downloading https://www.sec.gov/Archives/edgar/full-index/2012/QTR2/master.idx
+2026-02-09 10:41:20,857 DEBUG connectionpool.py _make_request https://www.sec.gov:443 "GET /Archives/edgar/full-index/2012/QTR2/master.idx HTTP/1.1" 200 3231795
+2026-02-09 10:41:20,979 DEBUG api.py from_bytes Encoding detection: ascii is most likely the one.
+2026-02-09 10:41:21,289 INFO edgar_master_index.py <module> Wrote 1332 rows to output\edgar_10k_2012_Q2.csv
+2026-02-09 10:41:21,490 INFO edgar_master_index.py <module> Processing 2012 Q3...
+2026-02-09 10:41:21,490 INFO edgar_master_index.py download_master_index Downloading https://www.sec.gov/Archives/edgar/full-index/2012/QTR3/master.idx
+2026-02-09 10:41:21,675 DEBUG connectionpool.py _make_request https://www.sec.gov:443 "GET /Archives/edgar/full-index/2012/QTR3/master.idx HTTP/1.1" 200 2764714
+2026-02-09 10:41:21,777 DEBUG api.py from_bytes Encoding detection: ascii is most likely the one.
+2026-02-09 10:41:22,031 INFO edgar_master_index.py <module> Wrote 707 rows to output\edgar_10k_2012_Q3.csv
+2026-02-09 10:41:22,232 INFO edgar_master_index.py <module> Processing 2012 Q4...
+2026-02-09 10:41:22,233 INFO edgar_master_index.py download_master_index Downloading https://www.sec.gov/Archives/edgar/full-index/2012/QTR4/master.idx
+2026-02-09 10:41:22,413 DEBUG connectionpool.py _make_request https://www.sec.gov:443 "GET /Archives/edgar/full-index/2012/QTR4/master.idx HTTP/1.1" 200 2864177
+2026-02-09 10:41:22,529 DEBUG api.py from_bytes Encoding detection: ascii is most likely the one.
+2026-02-09 10:41:22,795 INFO edgar_master_index.py <module> Wrote 777 rows to output\edgar_10k_2012_Q4.csv
+2026-02-09 10:41:22,996 INFO edgar_master_index.py <module> Processing 2013 Q1...
+2026-02-09 10:41:22,996 INFO edgar_master_index.py download_master_index Downloading https://www.sec.gov/Archives/edgar/full-index/2013/QTR1/master.idx
+2026-02-09 10:41:23,200 DEBUG connectionpool.py _make_request https://www.sec.gov:443 "GET /Archives/edgar/full-index/2013/QTR1/master.idx HTTP/1.1" 200 3878666
+2026-02-09 10:41:23,399 DEBUG api.py from_bytes Encoding detection: ascii is most likely the one.
+2026-02-09 10:41:23,792 INFO edgar_master_index.py <module> Wrote 4927 rows to output\edgar_10k_2013_Q1.csv
+2026-02-09 10:41:23,993 INFO edgar_master_index.py <module> Processing 2013 Q2...
+2026-02-09 10:41:23,993 INFO edgar_master_index.py download_master_index Downloading https://www.sec.gov/Archives/edgar/full-index/2013/QTR2/master.idx
+2026-02-09 10:41:24,187 DEBUG connectionpool.py _make_request https://www.sec.gov:443 "GET /Archives/edgar/full-index/2013/QTR2/master.idx HTTP/1.1" 200 3367559
+2026-02-09 10:41:24,313 DEBUG api.py from_bytes Encoding detection: ascii is most likely the one.
+2026-02-09 10:41:24,637 INFO edgar_master_index.py <module> Wrote 1751 rows to output\edgar_10k_2013_Q2.csv
+2026-02-09 10:41:24,838 INFO edgar_master_index.py <module> Processing 2013 Q3...
+2026-02-09 10:41:24,838 INFO edgar_master_index.py download_master_index Downloading https://www.sec.gov/Archives/edgar/full-index/2013/QTR3/master.idx
+2026-02-09 10:41:25,345 DEBUG connectionpool.py _make_request https://www.sec.gov:443 "GET /Archives/edgar/full-index/2013/QTR3/master.idx HTTP/1.1" 200 2871888
+2026-02-09 10:41:25,457 DEBUG api.py from_bytes Encoding detection: ascii is most likely the one.
+2026-02-09 10:41:25,726 INFO edgar_master_index.py <module> Wrote 744 rows to output\edgar_10k_2013_Q3.csv
+2026-02-09 10:41:25,926 INFO edgar_master_index.py <module> Processing 2013 Q4...
+2026-02-09 10:41:25,926 INFO edgar_master_index.py download_master_index Downloading https://www.sec.gov/Archives/edgar/full-index/2013/QTR4/master.idx
+2026-02-09 10:41:26,171 DEBUG connectionpool.py _make_request https://www.sec.gov:443 "GET /Archives/edgar/full-index/2013/QTR4/master.idx HTTP/1.1" 200 2906520
+2026-02-09 10:41:26,275 DEBUG api.py from_bytes Encoding detection: ascii is most likely the one.
+2026-02-09 10:41:26,540 INFO edgar_master_index.py <module> Wrote 683 rows to output\edgar_10k_2013_Q4.csv
+2026-02-09 10:41:26,740 INFO edgar_master_index.py <module> Processing 2014 Q1...
+2026-02-09 10:41:26,741 INFO edgar_master_index.py download_master_index Downloading https://www.sec.gov/Archives/edgar/full-index/2014/QTR1/master.idx
+2026-02-09 10:41:26,977 DEBUG connectionpool.py _make_request https://www.sec.gov:443 "GET /Archives/edgar/full-index/2014/QTR1/master.idx HTTP/1.1" 200 3972319
+2026-02-09 10:41:27,154 DEBUG api.py from_bytes Encoding detection: ascii is most likely the one.
+2026-02-09 10:41:27,550 INFO edgar_master_index.py <module> Wrote 5553 rows to output\edgar_10k_2014_Q1.csv
+2026-02-09 10:41:27,750 INFO edgar_master_index.py <module> Processing 2014 Q2...
+2026-02-09 10:41:27,751 INFO edgar_master_index.py download_master_index Downloading https://www.sec.gov/Archives/edgar/full-index/2014/QTR2/master.idx
+2026-02-09 10:41:28,009 DEBUG connectionpool.py _make_request https://www.sec.gov:443 "GET /Archives/edgar/full-index/2014/QTR2/master.idx HTTP/1.1" 200 3318054
+2026-02-09 10:41:28,158 DEBUG api.py from_bytes Encoding detection: ascii is most likely the one.
+2026-02-09 10:41:28,471 INFO edgar_master_index.py <module> Wrote 1219 rows to output\edgar_10k_2014_Q2.csv
+2026-02-09 10:41:28,672 INFO edgar_master_index.py <module> Processing 2014 Q3...
+2026-02-09 10:41:28,672 INFO edgar_master_index.py download_master_index Downloading https://www.sec.gov/Archives/edgar/full-index/2014/QTR3/master.idx
+2026-02-09 10:41:28,868 DEBUG connectionpool.py _make_request https://www.sec.gov:443 "GET /Archives/edgar/full-index/2014/QTR3/master.idx HTTP/1.1" 200 2880671
+2026-02-09 10:41:28,996 DEBUG api.py from_bytes Encoding detection: ascii is most likely the one.
+2026-02-09 10:41:29,266 INFO edgar_master_index.py <module> Wrote 656 rows to output\edgar_10k_2014_Q3.csv
+2026-02-09 10:41:29,467 INFO edgar_master_index.py <module> Processing 2014 Q4...
+2026-02-09 10:41:29,467 INFO edgar_master_index.py download_master_index Downloading https://www.sec.gov/Archives/edgar/full-index/2014/QTR4/master.idx
+2026-02-09 10:41:29,662 DEBUG connectionpool.py _make_request https://www.sec.gov:443 "GET /Archives/edgar/full-index/2014/QTR4/master.idx HTTP/1.1" 200 2979343
+2026-02-09 10:41:29,811 DEBUG api.py from_bytes Encoding detection: ascii is most likely the one.
+2026-02-09 10:41:30,078 INFO edgar_master_index.py <module> Wrote 656 rows to output\edgar_10k_2014_Q4.csv
+2026-02-09 10:41:30,279 INFO edgar_master_index.py <module> Processing 2015 Q1...
+2026-02-09 10:41:30,279 INFO edgar_master_index.py download_master_index Downloading https://www.sec.gov/Archives/edgar/full-index/2015/QTR1/master.idx
+2026-02-09 10:41:30,480 DEBUG connectionpool.py _make_request https://www.sec.gov:443 "GET /Archives/edgar/full-index/2015/QTR1/master.idx HTTP/1.1" 200 4065054
+2026-02-09 10:41:30,650 DEBUG api.py from_bytes Encoding detection: ascii is most likely the one.
+2026-02-09 10:41:31,058 INFO edgar_master_index.py <module> Wrote 5671 rows to output\edgar_10k_2015_Q1.csv
+2026-02-09 10:41:31,258 INFO edgar_master_index.py <module> Processing 2015 Q2...
+2026-02-09 10:41:31,259 INFO edgar_master_index.py download_master_index Downloading https://www.sec.gov/Archives/edgar/full-index/2015/QTR2/master.idx
+2026-02-09 10:41:31,474 DEBUG connectionpool.py _make_request https://www.sec.gov:443 "GET /Archives/edgar/full-index/2015/QTR2/master.idx HTTP/1.1" 200 3434854
+2026-02-09 10:41:31,619 DEBUG api.py from_bytes Encoding detection: ascii is most likely the one.
+2026-02-09 10:41:31,944 INFO edgar_master_index.py <module> Wrote 1110 rows to output\edgar_10k_2015_Q2.csv
+2026-02-09 10:41:32,144 INFO edgar_master_index.py <module> Processing 2015 Q3...
+2026-02-09 10:41:32,145 INFO edgar_master_index.py download_master_index Downloading https://www.sec.gov/Archives/edgar/full-index/2015/QTR3/master.idx
+2026-02-09 10:41:32,334 DEBUG connectionpool.py _make_request https://www.sec.gov:443 "GET /Archives/edgar/full-index/2015/QTR3/master.idx HTTP/1.1" 200 2829093
+2026-02-09 10:41:32,454 DEBUG api.py from_bytes Encoding detection: ascii is most likely the one.
+2026-02-09 10:41:32,718 INFO edgar_master_index.py <module> Wrote 619 rows to output\edgar_10k_2015_Q3.csv
+2026-02-09 10:41:32,918 INFO edgar_master_index.py <module> Processing 2015 Q4...
+2026-02-09 10:41:32,919 INFO edgar_master_index.py download_master_index Downloading https://www.sec.gov/Archives/edgar/full-index/2015/QTR4/master.idx
+2026-02-09 10:41:33,099 DEBUG connectionpool.py _make_request https://www.sec.gov:443 "GET /Archives/edgar/full-index/2015/QTR4/master.idx HTTP/1.1" 200 2855340
+2026-02-09 10:41:33,222 DEBUG api.py from_bytes Encoding detection: ascii is most likely the one.
+2026-02-09 10:41:33,497 INFO edgar_master_index.py <module> Wrote 585 rows to output\edgar_10k_2015_Q4.csv
+2026-02-09 10:41:33,698 INFO edgar_master_index.py <module> Processing 2016 Q1...
+2026-02-09 10:41:33,698 INFO edgar_master_index.py download_master_index Downloading https://www.sec.gov/Archives/edgar/full-index/2016/QTR1/master.idx
+2026-02-09 10:41:33,885 DEBUG connectionpool.py _make_request https://www.sec.gov:443 "GET /Archives/edgar/full-index/2016/QTR1/master.idx HTTP/1.1" 200 4020442
+2026-02-09 10:41:34,046 DEBUG api.py from_bytes Encoding detection: ascii is most likely the one.
+2026-02-09 10:41:34,453 INFO edgar_master_index.py <module> Wrote 5462 rows to output\edgar_10k_2016_Q1.csv
+2026-02-09 10:41:34,654 INFO edgar_master_index.py <module> Processing 2016 Q2...
+2026-02-09 10:41:34,654 INFO edgar_master_index.py download_master_index Downloading https://www.sec.gov/Archives/edgar/full-index/2016/QTR2/master.idx
+2026-02-09 10:41:34,849 DEBUG connectionpool.py _make_request https://www.sec.gov:443 "GET /Archives/edgar/full-index/2016/QTR2/master.idx HTTP/1.1" 200 3262131
+2026-02-09 10:41:34,987 DEBUG api.py from_bytes Encoding detection: ascii is most likely the one.
+2026-02-09 10:41:35,286 INFO edgar_master_index.py <module> Wrote 1005 rows to output\edgar_10k_2016_Q2.csv
+2026-02-09 10:41:35,486 INFO edgar_master_index.py <module> Processing 2016 Q3...
+2026-02-09 10:41:35,487 INFO edgar_master_index.py download_master_index Downloading https://www.sec.gov/Archives/edgar/full-index/2016/QTR3/master.idx
+2026-02-09 10:41:35,696 DEBUG connectionpool.py _make_request https://www.sec.gov:443 "GET /Archives/edgar/full-index/2016/QTR3/master.idx HTTP/1.1" 200 2777617
+2026-02-09 10:41:36,437 DEBUG api.py from_bytes Encoding detection: ascii is most likely the one.
+2026-02-09 10:41:36,687 INFO edgar_master_index.py <module> Wrote 574 rows to output\edgar_10k_2016_Q3.csv
+2026-02-09 10:41:36,888 INFO edgar_master_index.py <module> Processing 2016 Q4...
+2026-02-09 10:41:36,888 INFO edgar_master_index.py download_master_index Downloading https://www.sec.gov/Archives/edgar/full-index/2016/QTR4/master.idx
+2026-02-09 10:41:37,099 DEBUG connectionpool.py _make_request https://www.sec.gov:443 "GET /Archives/edgar/full-index/2016/QTR4/master.idx HTTP/1.1" 200 2715832
+2026-02-09 10:41:37,211 DEBUG api.py from_bytes Encoding detection: ascii is most likely the one.
+2026-02-09 10:41:37,451 INFO edgar_master_index.py <module> Wrote 548 rows to output\edgar_10k_2016_Q4.csv
+2026-02-09 10:41:37,652 INFO edgar_master_index.py <module> Processing 2017 Q1...
+2026-02-09 10:41:37,652 INFO edgar_master_index.py download_master_index Downloading https://www.sec.gov/Archives/edgar/full-index/2017/QTR1/master.idx
+2026-02-09 10:41:37,889 DEBUG connectionpool.py _make_request https://www.sec.gov:443 "GET /Archives/edgar/full-index/2017/QTR1/master.idx HTTP/1.1" 200 3981558
+2026-02-09 10:41:38,064 DEBUG api.py from_bytes Encoding detection: ascii is most likely the one.
+2026-02-09 10:41:38,461 INFO edgar_master_index.py <module> Wrote 5275 rows to output\edgar_10k_2017_Q1.csv
+2026-02-09 10:41:38,661 INFO edgar_master_index.py <module> Processing 2017 Q2...
+2026-02-09 10:41:38,661 INFO edgar_master_index.py download_master_index Downloading https://www.sec.gov/Archives/edgar/full-index/2017/QTR2/master.idx
+2026-02-09 10:41:38,841 DEBUG connectionpool.py _make_request https://www.sec.gov:443 "GET /Archives/edgar/full-index/2017/QTR2/master.idx HTTP/1.1" 200 3357693
+2026-02-09 10:41:38,985 DEBUG api.py from_bytes Encoding detection: ascii is most likely the one.
+2026-02-09 10:41:39,299 INFO edgar_master_index.py <module> Wrote 945 rows to output\edgar_10k_2017_Q2.csv
+2026-02-09 10:41:39,500 INFO edgar_master_index.py <module> Processing 2017 Q3...
+2026-02-09 10:41:39,500 INFO edgar_master_index.py download_master_index Downloading https://www.sec.gov/Archives/edgar/full-index/2017/QTR3/master.idx
+2026-02-09 10:41:39,699 DEBUG connectionpool.py _make_request https://www.sec.gov:443 "GET /Archives/edgar/full-index/2017/QTR3/master.idx HTTP/1.1" 200 2740411
+2026-02-09 10:41:39,839 DEBUG api.py from_bytes Encoding detection: utf_8 is most likely the one.
+2026-02-09 10:41:40,102 INFO edgar_master_index.py <module> Wrote 513 rows to output\edgar_10k_2017_Q3.csv
+2026-02-09 10:41:40,303 INFO edgar_master_index.py <module> Processing 2017 Q4...
+2026-02-09 10:41:40,303 INFO edgar_master_index.py download_master_index Downloading https://www.sec.gov/Archives/edgar/full-index/2017/QTR4/master.idx
+2026-02-09 10:41:40,552 DEBUG connectionpool.py _make_request https://www.sec.gov:443 "GET /Archives/edgar/full-index/2017/QTR4/master.idx HTTP/1.1" 200 2771799
+2026-02-09 10:41:40,664 DEBUG api.py from_bytes Encoding detection: ascii is most likely the one.
+2026-02-09 10:41:40,906 INFO edgar_master_index.py <module> Wrote 515 rows to output\edgar_10k_2017_Q4.csv
+2026-02-09 10:41:41,107 INFO edgar_master_index.py <module> Processing 2018 Q1...
+2026-02-09 10:41:41,107 INFO edgar_master_index.py download_master_index Downloading https://www.sec.gov/Archives/edgar/full-index/2018/QTR1/master.idx
+2026-02-09 10:41:41,292 DEBUG connectionpool.py _make_request https://www.sec.gov:443 "GET /Archives/edgar/full-index/2018/QTR1/master.idx HTTP/1.1" 200 3879658
+2026-02-09 10:41:41,452 DEBUG api.py from_bytes Encoding detection: ascii is most likely the one.
+2026-02-09 10:41:41,842 INFO edgar_master_index.py <module> Wrote 4868 rows to output\edgar_10k_2018_Q1.csv
+2026-02-09 10:41:42,043 INFO edgar_master_index.py <module> Processing 2018 Q2...
+2026-02-09 10:41:42,043 INFO edgar_master_index.py download_master_index Downloading https://www.sec.gov/Archives/edgar/full-index/2018/QTR2/master.idx
+2026-02-09 10:41:42,261 DEBUG connectionpool.py _make_request https://www.sec.gov:443 "GET /Archives/edgar/full-index/2018/QTR2/master.idx HTTP/1.1" 200 3278298
+2026-02-09 10:41:42,393 DEBUG api.py from_bytes Encoding detection: ascii is most likely the one.
+2026-02-09 10:41:42,705 INFO edgar_master_index.py <module> Wrote 1270 rows to output\edgar_10k_2018_Q2.csv
+2026-02-09 10:41:42,906 INFO edgar_master_index.py <module> Processing 2018 Q3...
+2026-02-09 10:41:42,906 INFO edgar_master_index.py download_master_index Downloading https://www.sec.gov/Archives/edgar/full-index/2018/QTR3/master.idx
+2026-02-09 10:41:43,148 DEBUG connectionpool.py _make_request https://www.sec.gov:443 "GET /Archives/edgar/full-index/2018/QTR3/master.idx HTTP/1.1" 200 2692846
+2026-02-09 10:41:43,255 DEBUG api.py from_bytes Encoding detection: ascii is most likely the one.
+2026-02-09 10:41:43,497 INFO edgar_master_index.py <module> Wrote 464 rows to output\edgar_10k_2018_Q3.csv
+2026-02-09 10:41:43,698 INFO edgar_master_index.py <module> Processing 2018 Q4...
+2026-02-09 10:41:43,698 INFO edgar_master_index.py download_master_index Downloading https://www.sec.gov/Archives/edgar/full-index/2018/QTR4/master.idx
+2026-02-09 10:41:43,949 DEBUG connectionpool.py _make_request https://www.sec.gov:443 "GET /Archives/edgar/full-index/2018/QTR4/master.idx HTTP/1.1" 200 2698672
+2026-02-09 10:41:44,060 DEBUG api.py from_bytes Encoding detection: ascii is most likely the one.
+2026-02-09 10:41:44,306 INFO edgar_master_index.py <module> Wrote 490 rows to output\edgar_10k_2018_Q4.csv
+2026-02-09 10:41:44,507 INFO edgar_master_index.py <module> Processing 2019 Q1...
+2026-02-09 10:41:44,507 INFO edgar_master_index.py download_master_index Downloading https://www.sec.gov/Archives/edgar/full-index/2019/QTR1/master.idx
+2026-02-09 10:41:44,739 DEBUG connectionpool.py _make_request https://www.sec.gov:443 "GET /Archives/edgar/full-index/2019/QTR1/master.idx HTTP/1.1" 200 3789475
+2026-02-09 10:41:44,899 DEBUG api.py from_bytes Encoding detection: ascii is most likely the one.
+2026-02-09 10:41:45,280 INFO edgar_master_index.py <module> Wrote 4870 rows to output\edgar_10k_2019_Q1.csv
+2026-02-09 10:41:45,481 INFO edgar_master_index.py <module> Processing 2019 Q2...
+2026-02-09 10:41:45,481 INFO edgar_master_index.py download_master_index Downloading https://www.sec.gov/Archives/edgar/full-index/2019/QTR2/master.idx
+2026-02-09 10:41:45,673 DEBUG connectionpool.py _make_request https://www.sec.gov:443 "GET /Archives/edgar/full-index/2019/QTR2/master.idx HTTP/1.1" 200 3275843
+2026-02-09 10:41:45,808 DEBUG api.py from_bytes Encoding detection: ascii is most likely the one.
+2026-02-09 10:41:46,146 INFO edgar_master_index.py <module> Wrote 1116 rows to output\edgar_10k_2019_Q2.csv
+2026-02-09 10:41:46,346 INFO edgar_master_index.py <module> Processing 2019 Q3...
+2026-02-09 10:41:46,347 INFO edgar_master_index.py download_master_index Downloading https://www.sec.gov/Archives/edgar/full-index/2019/QTR3/master.idx
+2026-02-09 10:41:46,570 DEBUG connectionpool.py _make_request https://www.sec.gov:443 "GET /Archives/edgar/full-index/2019/QTR3/master.idx HTTP/1.1" 200 2704682
+2026-02-09 10:41:46,684 DEBUG api.py from_bytes Encoding detection: ascii is most likely the one.
+2026-02-09 10:41:46,939 INFO edgar_master_index.py <module> Wrote 488 rows to output\edgar_10k_2019_Q3.csv
+2026-02-09 10:41:47,139 INFO edgar_master_index.py <module> Processing 2019 Q4...
+2026-02-09 10:41:47,140 INFO edgar_master_index.py download_master_index Downloading https://www.sec.gov/Archives/edgar/full-index/2019/QTR4/master.idx
+2026-02-09 10:41:47,351 DEBUG connectionpool.py _make_request https://www.sec.gov:443 "GET /Archives/edgar/full-index/2019/QTR4/master.idx HTTP/1.1" 200 2743365
+2026-02-09 10:41:47,456 DEBUG api.py from_bytes Encoding detection: ascii is most likely the one.
+2026-02-09 10:41:47,704 INFO edgar_master_index.py <module> Wrote 449 rows to output\edgar_10k_2019_Q4.csv
+2026-02-09 10:41:47,905 INFO edgar_master_index.py <module> Processing 2020 Q1...
+2026-02-09 10:41:47,905 INFO edgar_master_index.py download_master_index Downloading https://www.sec.gov/Archives/edgar/full-index/2020/QTR1/master.idx
+2026-02-09 10:41:48,090 DEBUG connectionpool.py _make_request https://www.sec.gov:443 "GET /Archives/edgar/full-index/2020/QTR1/master.idx HTTP/1.1" 200 3989177
+2026-02-09 10:41:48,251 DEBUG api.py from_bytes Encoding detection: ascii is most likely the one.
+2026-02-09 10:41:48,667 INFO edgar_master_index.py <module> Wrote 5088 rows to output\edgar_10k_2020_Q1.csv
+2026-02-09 10:41:48,867 INFO edgar_master_index.py <module> Processing 2020 Q2...
+2026-02-09 10:41:48,868 INFO edgar_master_index.py download_master_index Downloading https://www.sec.gov/Archives/edgar/full-index/2020/QTR2/master.idx
+2026-02-09 10:41:49,057 DEBUG connectionpool.py _make_request https://www.sec.gov:443 "GET /Archives/edgar/full-index/2020/QTR2/master.idx HTTP/1.1" 200 3349360
+2026-02-09 10:41:49,186 DEBUG api.py from_bytes Encoding detection: ascii is most likely the one.
+2026-02-09 10:41:49,520 INFO edgar_master_index.py <module> Wrote 790 rows to output\edgar_10k_2020_Q2.csv
+2026-02-09 10:41:49,720 INFO edgar_master_index.py <module> Processing 2020 Q3...
+2026-02-09 10:41:49,720 INFO edgar_master_index.py download_master_index Downloading https://www.sec.gov/Archives/edgar/full-index/2020/QTR3/master.idx
+2026-02-09 10:41:49,902 DEBUG connectionpool.py _make_request https://www.sec.gov:443 "GET /Archives/edgar/full-index/2020/QTR3/master.idx HTTP/1.1" 200 2908366
+2026-02-09 10:41:50,021 DEBUG api.py from_bytes Encoding detection: ascii is most likely the one.
+2026-02-09 10:41:50,306 INFO edgar_master_index.py <module> Wrote 455 rows to output\edgar_10k_2020_Q3.csv
+2026-02-09 10:41:50,507 INFO edgar_master_index.py <module> Processing 2020 Q4...
+2026-02-09 10:41:50,507 INFO edgar_master_index.py download_master_index Downloading https://www.sec.gov/Archives/edgar/full-index/2020/QTR4/master.idx
+2026-02-09 10:41:50,701 DEBUG connectionpool.py _make_request https://www.sec.gov:443 "GET /Archives/edgar/full-index/2020/QTR4/master.idx HTTP/1.1" 200 3042612
+2026-02-09 10:41:50,823 DEBUG api.py from_bytes Encoding detection: ascii is most likely the one.
+2026-02-09 10:41:51,104 INFO edgar_master_index.py <module> Wrote 436 rows to output\edgar_10k_2020_Q4.csv
+2026-02-09 10:41:51,305 INFO edgar_master_index.py <module> Processing 2021 Q1...
+2026-02-09 10:41:51,305 INFO edgar_master_index.py download_master_index Downloading https://www.sec.gov/Archives/edgar/full-index/2021/QTR1/master.idx
+2026-02-09 10:41:51,498 DEBUG connectionpool.py _make_request https://www.sec.gov:443 "GET /Archives/edgar/full-index/2021/QTR1/master.idx HTTP/1.1" 200 4459302
+2026-02-09 10:41:51,694 DEBUG api.py from_bytes Encoding detection: ascii is most likely the one.
+2026-02-09 10:41:52,153 INFO edgar_master_index.py <module> Wrote 5519 rows to output\edgar_10k_2021_Q1.csv
+2026-02-09 10:41:52,354 INFO edgar_master_index.py <module> Processing 2021 Q2...
+2026-02-09 10:41:52,354 INFO edgar_master_index.py download_master_index Downloading https://www.sec.gov/Archives/edgar/full-index/2021/QTR2/master.idx
+2026-02-09 10:41:52,595 DEBUG connectionpool.py _make_request https://www.sec.gov:443 "GET /Archives/edgar/full-index/2021/QTR2/master.idx HTTP/1.1" 200 3828184
+2026-02-09 10:41:52,758 DEBUG api.py from_bytes Encoding detection: ascii is most likely the one.
+2026-02-09 10:41:53,133 INFO edgar_master_index.py <module> Wrote 745 rows to output\edgar_10k_2021_Q2.csv
+2026-02-09 10:41:53,333 INFO edgar_master_index.py <module> Processing 2021 Q3...
+2026-02-09 10:41:53,333 INFO edgar_master_index.py download_master_index Downloading https://www.sec.gov/Archives/edgar/full-index/2021/QTR3/master.idx
+2026-02-09 10:41:53,558 DEBUG connectionpool.py _make_request https://www.sec.gov:443 "GET /Archives/edgar/full-index/2021/QTR3/master.idx HTTP/1.1" 200 3316212
+2026-02-09 10:41:53,692 DEBUG api.py from_bytes Encoding detection: ascii is most likely the one.
+2026-02-09 10:41:54,006 INFO edgar_master_index.py <module> Wrote 471 rows to output\edgar_10k_2021_Q3.csv
+2026-02-09 10:41:54,206 INFO edgar_master_index.py <module> Processing 2021 Q4...
+2026-02-09 10:41:54,207 INFO edgar_master_index.py download_master_index Downloading https://www.sec.gov/Archives/edgar/full-index/2021/QTR4/master.idx
+2026-02-09 10:41:54,448 DEBUG connectionpool.py _make_request https://www.sec.gov:443 "GET /Archives/edgar/full-index/2021/QTR4/master.idx HTTP/1.1" 200 3376344
+2026-02-09 10:41:54,572 DEBUG api.py from_bytes Encoding detection: ascii is most likely the one.
+2026-02-09 10:41:54,884 INFO edgar_master_index.py <module> Wrote 446 rows to output\edgar_10k_2021_Q4.csv
+2026-02-09 10:41:55,084 INFO edgar_master_index.py <module> Processing 2022 Q1...
+2026-02-09 10:41:55,084 INFO edgar_master_index.py download_master_index Downloading https://www.sec.gov/Archives/edgar/full-index/2022/QTR1/master.idx
+2026-02-09 10:41:55,256 DEBUG connectionpool.py _make_request https://www.sec.gov:443 "GET /Archives/edgar/full-index/2022/QTR1/master.idx HTTP/1.1" 200 4448192
+2026-02-09 10:41:55,435 DEBUG api.py from_bytes Encoding detection: ascii is most likely the one.
+2026-02-09 10:41:55,885 INFO edgar_master_index.py <module> Wrote 6016 rows to output\edgar_10k_2022_Q1.csv
+2026-02-09 10:41:56,086 INFO edgar_master_index.py <module> Processing 2022 Q2...
+2026-02-09 10:41:56,086 INFO edgar_master_index.py download_master_index Downloading https://www.sec.gov/Archives/edgar/full-index/2022/QTR2/master.idx
+2026-02-09 10:41:56,346 DEBUG connectionpool.py _make_request https://www.sec.gov:443 "GET /Archives/edgar/full-index/2022/QTR2/master.idx HTTP/1.1" 200 3750680
+2026-02-09 10:41:56,491 DEBUG api.py from_bytes Encoding detection: ascii is most likely the one.
+2026-02-09 10:41:56,847 INFO edgar_master_index.py <module> Wrote 935 rows to output\edgar_10k_2022_Q2.csv
+2026-02-09 10:41:57,048 INFO edgar_master_index.py <module> Processing 2022 Q3...
+2026-02-09 10:41:57,048 INFO edgar_master_index.py download_master_index Downloading https://www.sec.gov/Archives/edgar/full-index/2022/QTR3/master.idx
+2026-02-09 10:41:57,242 DEBUG connectionpool.py _make_request https://www.sec.gov:443 "GET /Archives/edgar/full-index/2022/QTR3/master.idx HTTP/1.1" 200 3130405
+2026-02-09 10:41:57,368 DEBUG api.py from_bytes Encoding detection: ascii is most likely the one.
+2026-02-09 10:41:57,657 INFO edgar_master_index.py <module> Wrote 400 rows to output\edgar_10k_2022_Q3.csv
+2026-02-09 10:41:57,858 INFO edgar_master_index.py <module> Processing 2022 Q4...
+2026-02-09 10:41:57,858 INFO edgar_master_index.py download_master_index Downloading https://www.sec.gov/Archives/edgar/full-index/2022/QTR4/master.idx
+2026-02-09 10:41:58,052 DEBUG connectionpool.py _make_request https://www.sec.gov:443 "GET /Archives/edgar/full-index/2022/QTR4/master.idx HTTP/1.1" 200 3025731
+2026-02-09 10:41:58,178 DEBUG api.py from_bytes Encoding detection: ascii is most likely the one.
+2026-02-09 10:41:58,451 INFO edgar_master_index.py <module> Wrote 441 rows to output\edgar_10k_2022_Q4.csv
+2026-02-09 10:41:58,651 INFO edgar_master_index.py <module> Processing 2023 Q1...
+2026-02-09 10:41:58,652 INFO edgar_master_index.py download_master_index Downloading https://www.sec.gov/Archives/edgar/full-index/2023/QTR1/master.idx
+2026-02-09 10:41:58,919 DEBUG connectionpool.py _make_request https://www.sec.gov:443 "GET /Archives/edgar/full-index/2023/QTR1/master.idx HTTP/1.1" 200 4295958
+2026-02-09 10:41:59,714 DEBUG api.py from_bytes Encoding detection: ascii is most likely the one.
+2026-02-09 10:42:00,161 INFO edgar_master_index.py <module> Wrote 5731 rows to output\edgar_10k_2023_Q1.csv
+2026-02-09 10:42:00,362 INFO edgar_master_index.py <module> Processing 2023 Q2...
+2026-02-09 10:42:00,362 INFO edgar_master_index.py download_master_index Downloading https://www.sec.gov/Archives/edgar/full-index/2023/QTR2/master.idx
+2026-02-09 10:42:00,552 DEBUG connectionpool.py _make_request https://www.sec.gov:443 "GET /Archives/edgar/full-index/2023/QTR2/master.idx HTTP/1.1" 200 3891860
+2026-02-09 10:42:00,731 DEBUG api.py from_bytes Encoding detection: ascii is most likely the one.
+2026-02-09 10:42:01,110 INFO edgar_master_index.py <module> Wrote 862 rows to output\edgar_10k_2023_Q2.csv
+2026-02-09 10:42:01,311 INFO edgar_master_index.py <module> Processing 2023 Q3...
+2026-02-09 10:42:01,311 INFO edgar_master_index.py download_master_index Downloading https://www.sec.gov/Archives/edgar/full-index/2023/QTR3/master.idx
+2026-02-09 10:42:01,501 DEBUG connectionpool.py _make_request https://www.sec.gov:443 "GET /Archives/edgar/full-index/2023/QTR3/master.idx HTTP/1.1" 200 3241506
+2026-02-09 10:42:01,639 DEBUG api.py from_bytes Encoding detection: ascii is most likely the one.
+2026-02-09 10:42:01,953 INFO edgar_master_index.py <module> Wrote 369 rows to output\edgar_10k_2023_Q3.csv
+2026-02-09 10:42:02,154 INFO edgar_master_index.py <module> Processing 2023 Q4...
+2026-02-09 10:42:02,154 INFO edgar_master_index.py download_master_index Downloading https://www.sec.gov/Archives/edgar/full-index/2023/QTR4/master.idx
+2026-02-09 10:42:02,334 DEBUG connectionpool.py _make_request https://www.sec.gov:443 "GET /Archives/edgar/full-index/2023/QTR4/master.idx HTTP/1.1" 200 3219800
+2026-02-09 10:42:02,466 DEBUG api.py from_bytes Encoding detection: ascii is most likely the one.
+2026-02-09 10:42:02,767 INFO edgar_master_index.py <module> Wrote 404 rows to output\edgar_10k_2023_Q4.csv

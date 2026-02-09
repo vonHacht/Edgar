@@ -1,8 +1,6 @@
 ﻿using Edgar.Config;
 using Edgar.Companies;
 
-using System.Runtime;
-
 namespace TestEdgar
 {
     public class TestCompanies

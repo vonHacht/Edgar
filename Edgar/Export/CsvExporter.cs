@@ -1,28 +1,27 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.IO;
-using System.Linq;
+﻿using System.Globalization;
 using System.Text;
-using System.Threading.Tasks;
-
-using Edgar.Models;
 
 namespace Edgar.Export
 {
-    public class CsvExporter
+    public abstract class CsvExporter<TRow>
     {
-        private static readonly CultureInfo CsvCulture = CultureInfo.InvariantCulture;
-        
-        private static string Delimiter = ";";
+        private readonly bool _endcontent;
 
-        public async Task WriteAsync(IEnumerable<PanelRow> rows, string outputPath, bool overwrite = true)
+        public CsvExporter(bool endcontent = false)
+        {
+            _endcontent = endcontent;
+        }
+
+
+        public async Task WriteAsync(IEnumerable<TRow> rows, string outputPath, bool overwrite = true)
         {
             if (rows == null) throw new ArgumentNullException(nameof(rows));
 
             var list = rows.ToList();
             if (list.Count == 0)
                 return;
+
+            OnBeforeWrite(list);
 
             var writeHeader = overwrite || !File.Exists(outputPath);
 
@@ -42,60 +41,25 @@ namespace Edgar.Export
 
             foreach (var row in list)
                 await writer.WriteLineAsync(BuildRow(row));
+
+            if (_endcontent)
+            {
+                var end = EndContent();
+                if (!string.IsNullOrEmpty(end))
+                    await writer.WriteLineAsync(end);
+            }
         }
 
-        private static string BuildHeader()
-        {
-            return string.Join(Delimiter,
-                "cik",
-                "ticker",
-                "year",
-                "filing_date",
-                "accession_number",
+        protected virtual void OnBeforeWrite(IReadOnlyList<TRow> rows) { }
 
-                "item1a_word_count",
-
-                "risk_count",
-                "risk_freq",
-
-                "negative_count",
-                "negative_freq",
-
-                "uncertainty_count",
-                "uncertainty_freq",
-
-                "llm_risk_score"
-            );
-        }
-
-        private static string BuildRow(PanelRow r)
-        {
-            return string.Join(Delimiter,
-                Esc(r.Cik10),
-                Esc(r.Ticker),
-                r.Year.ToString(CsvCulture),
-                r.FilingDate.ToString("yyyy-MM-dd", CsvCulture),
-                Esc(r.AccessionNumber),
-
-                r.Item1AWordCount.ToString(CsvCulture),
-
-                r.RiskCount.ToString(CsvCulture),
-                r.RiskFrequency.ToString("G", CsvCulture),
-
-                r.NegativeCount.ToString(CsvCulture),
-                r.NegativeFrequency.ToString("G", CsvCulture),
-
-                r.UncertaintyCount.ToString(CsvCulture),
-                r.UncertaintyFrequency.ToString("G", CsvCulture),
-
-                r.LlmRiskScore?.ToString("G", CsvCulture) ?? ""
-            );
-        }
+        public abstract string BuildHeader();
+        public abstract string BuildRow(TRow row);
+        public virtual string? EndContent() => null;
 
         /// <summary>
         /// Escapes CSV fields according to RFC 4180.
         /// </summary>
-        private static string Esc(string? value)
+        public static string Esc(string? value)
         {
             if (string.IsNullOrEmpty(value))
                 return "";

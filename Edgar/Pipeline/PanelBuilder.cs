@@ -10,6 +10,10 @@ namespace Edgar.Pipeline
 {
     public class PanelBuilder
     {
+        private readonly string filenameRiskpanel = "risk_panel.csv";
+
+        private readonly string filenameCikMatches = "cik_matches.csv";
+
         private readonly AppSettings _settings;
         private readonly CompaniesService _companiesService;
 
@@ -20,8 +24,10 @@ namespace Edgar.Pipeline
         private readonly ItemSectionExtractor _extractor;
         private readonly LmDictionaryScorer _dictionaryScorer;
 
-        private readonly CsvExporter _exporter;
-        //private readonly CikLinker _linker;
+        // private readonly CsvExporter _exporter;
+        // private readonly CikLinker _linker;
+
+        private readonly CIKMatchExporter _cikExporter;
 
         public PanelBuilder()
         {
@@ -41,27 +47,31 @@ namespace Edgar.Pipeline
             _dictionaryScorer = new LmDictionaryScorer(_settings.DictDir);
 
             // Output
-            _exporter = new CsvExporter();
+            // _exporter = new CsvExporter();
+            _cikExporter = new CIKMatchExporter();
         }
 
         public async Task RunAsync()
         {
             Console.WriteLine("Starting EDGAR risk pipeline...");
 
-            var firms = LoadFirms();
+            //var firms = LoadFirms();
+            var firms = _companiesService.LoadFirms();
             var panelRows = new List<PanelRow>();
 
             foreach (var firm in firms)
             {
-                Console.WriteLine($"Processing firm {firm.CIK}");
+
+
+                /*Console.WriteLine($"Processing firm {firm.CIK}");
 
                 var filings = await _indexService.Get10KFilingsAsync(
                     firm,
                     _settings.StartYear,
                     _settings.EndYear
-                );
+                );*/
 
-                foreach (var filing in filings)
+                /*foreach (var filing in filings)
                 {
                     try
                     {
@@ -80,20 +90,26 @@ namespace Edgar.Pipeline
                             $"Error {firm.CIK} {filing.AccessionNumber}: {ex.Message}"
                         );
                     }
-                }
+                }*/
             }
 
             // OPTIONAL but recommended:
             // enforce "first filing per firm-year"
-            panelRows = panelRows
+            /*panelRows = panelRows
                 .GroupBy(r => (r.Cik10, r.Year))
                 .Select(g => g.OrderBy(r => r.FilingDate).First())
                 .ToList();
 
-            var outputPath = Path.Combine(_settings.OutputDir, "risk_panel.csv");
+            var outputPath = Path.Combine(_settings.OutputDir, filenameRiskpanel);
             await _exporter.WriteAsync(panelRows, outputPath);
 
-            Console.WriteLine($"Pipeline complete. Rows written: {panelRows.Count}");
+            Console.WriteLine($"Pipeline complete. Rows written: {panelRows.Count}");*/
+
+            var cikmatchOutput = Path.Combine(_settings.OutputDir, filenameCikMatches);
+        
+            await _cikExporter.WriteAsync(firms, cikmatchOutput);
+
+
         }
 
         private async Task<PanelRow?> ProcessFilingAsync(Firm firm, Filing filing)

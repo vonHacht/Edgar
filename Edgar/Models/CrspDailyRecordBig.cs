@@ -1,6 +1,6 @@
 ﻿namespace Edgar.Models
 {
-    public class CrspDailyRecord
+    public class CrspDailyRecordBig
     {
         public int PERMNO { get; set; }
         public DateTime date { get; set; }

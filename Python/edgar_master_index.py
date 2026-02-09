@@ -2,9 +2,8 @@ import sys
 import os
 import time
 import csv
-import re
 import logging
-from typing import Iterable, Tuple, Dict, Optional
+from typing import Iterable, Tuple, Dict
 
 import requests
 from requests.adapters import HTTPAdapter
@@ -99,65 +98,33 @@ def parse_master_index(lines: list[str]) -> Iterable[Tuple[str, str, str, str, s
         cik, name, form, date_filed, filename = (p.strip() for p in parts)
         yield cik, name, form, date_filed, filename
 
-# -----------------------
-# CUSIP
-# -----------------------
-# More robust: allow punctuation/colon and weird spacing. Capture 8–9 alnum.
-CUSIP_REGEX = re.compile(r"\bCUSIP\b[^0-9A-Z]{0,10}([0-9A-Z]{8,9})")
-
-def extract_cusip_from_filing(
-    session: requests.Session,
-    filename: str,
-    cache: Dict[str, str],
-    last_request_time: list[float],
-) -> str:
+def load_cik_ticker_map(session: requests.Session) -> Dict[str, str]:
     """
-    Downloads filing text (once) and extracts CUSIP from header chunk.
-    Uses cache by filename to avoid repeated requests.
+    Returns {cik (10-digit zero-padded): ticker}
     """
-    if filename in cache:
-        return cache[filename]
+    url = "https://www.sec.gov/files/company_tickers.json"
+    log.info("Downloading CIK → ticker map")
+    r = session.get(url, timeout=30)
+    r.raise_for_status()
 
-    # Throttle
-    now = time.time()
-    elapsed = now - last_request_time[0]
-    if elapsed < REQUEST_DELAY_SECONDS:
-        time.sleep(REQUEST_DELAY_SECONDS - elapsed)
+    data = r.json()
+    cik_to_ticker = {}
 
-    filing_url = f"https://www.sec.gov/Archives/{filename}"
-    try:
-        r = session.get(filing_url, timeout=60)
+    for item in data.values():
+        cik = str(item["cik_str"]).zfill(10)
+        ticker = item.get("ticker", "").upper()
+        if ticker:
+            cik_to_ticker[cik] = ticker
 
-        # If still rate-limited after retries, handle gently
-        if r.status_code == 429:
-            retry_after = r.headers.get("Retry-After")
-            sleep_s = float(retry_after) if retry_after and retry_after.isdigit() else 2.0
-            log.warning(f"429 rate limited. Sleeping {sleep_s:.1f}s: {filing_url}")
-            time.sleep(sleep_s)
-            r = session.get(filing_url, timeout=60)
-
-        r.raise_for_status()
-        #text = r.text[:FILING_SCAN_CHARS]
-
-        text = r.text
-
-        m = CUSIP_REGEX.search(text)
-        cusip = m.group(1) if m else ""
-        cache[filename] = cusip
-        return cusip
-
-    except Exception as e:
-        log.warning(f"Failed CUSIP for {filename}: {e}")
-        cache[filename] = ""
-        return ""
-    finally:
-        last_request_time[0] = time.time()
+    log.info(f"Loaded {len(cik_to_ticker):,} CIK→ticker mappings")
+    return cik_to_ticker
 
 # -----------------------
 # MAIN
 # -----------------------
 if __name__ == "__main__":
     session = make_session()
+    cik_to_ticker = load_cik_ticker_map(session)
     cusip_cache: Dict[str, str] = {}
     last_request_time = [0.0]
 
@@ -183,6 +150,7 @@ if __name__ == "__main__":
                     writer.writerow([
                         "Company Name",
                         "CIK",
+                        "Ticker",
                         "CUSIP",
                         "Form Type",
                         "Date Filed",
@@ -193,17 +161,13 @@ if __name__ == "__main__":
                         if form not in FORMS:
                             continue
 
-                        # Does not work
-                        #cusip = extract_cusip_from_filing(
-                        #    session=session,
-                        #    filename=filename,
-                        #    cache=cusip_cache,
-                        #    last_request_time=last_request_time,
-                        #)
+                        cik_padded = cik.zfill(10)
+                        ticker = cik_to_ticker.get(cik_padded, "")
 
                         writer.writerow([
                             name,
-                            cik.zfill(10),
+                            cik_padded,
+                            ticker,
                             "",
                             form,
                             date_filed,
