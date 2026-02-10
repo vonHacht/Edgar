@@ -1,19 +1,32 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-
+using CsvHelper.Configuration.Attributes;
 using Edgar.Models;
 
 namespace Edgar.Filter
 {
     public class Filter
     {
-        public static bool MatchingCIK(Firm firm)
+        public static bool NonMatchingCIK(Firm firm)
         {
-            return firm.CRSPSmall.Count > 0;
+            return firm.FirmTradingDays.Count == 0;
         }
 
+        public static bool Delisted(Firm firm)
+        {
+            bool delisted = false;
 
+            firm.FirmTradingDays.ForEach(tradingDay =>
+            {
+                if (tradingDay.DelistCode != null)
+                {
+                    delisted = true;
+                }
+            });
+
+            return delisted;
+        }
 
     }
 }

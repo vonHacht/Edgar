@@ -1,8 +1,6 @@
-﻿using System;
-
-namespace Edgar.Models
+﻿namespace Edgar.Models
 {
-    public class CrspDailyRecordSmall 
+    public class CcmCssRecord 
     {
         public string GVKEY { get; set; } = default!;
         public string LIID { get; set; } = default!;

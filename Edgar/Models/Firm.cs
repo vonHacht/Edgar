@@ -3,7 +3,6 @@
     public class Firm
     {
         public string? CIK { get; set; }
-
         public string? LatestCompanyName { get; set; }
         public bool NameChanged { get; set; }
 
@@ -16,8 +15,10 @@
 
         public string? Gvkey { get; set; }
 
-        public List<CrspDailyRecordBig> CRSPBig { get; set; } = new List<CrspDailyRecordBig>();
-    
-        public List<CrspDailyRecordSmall> CRSPSmall { get; set; } = new List<CrspDailyRecordSmall>();
+        public List<FirmTradingDay> FirmTradingDays { get; set; } = new List<FirmTradingDay>();
+
+        //public List<CrspCssRecord> CRSPBig { get; set; } = new List<CrspCssRecord>();
+
+        //public List<CcmCssRecord> CRSPSmall { get; set; } = new List<CcmCssRecord>();
     }
 }

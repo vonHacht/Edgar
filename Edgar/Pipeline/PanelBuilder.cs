@@ -10,9 +10,6 @@ namespace Edgar.Pipeline
 {
     public class PanelBuilder
     {
-        private readonly string filenameRiskpanel = "risk_panel.csv";
-
-        private readonly string filenameCikMatches = "cik_matches.csv";
 
         private readonly AppSettings _settings;
         private readonly CompaniesService _companiesService;
@@ -27,7 +24,7 @@ namespace Edgar.Pipeline
         // private readonly CsvExporter _exporter;
         // private readonly CikLinker _linker;
 
-        private readonly CIKMatchExporter _cikExporter;
+        private readonly FilterExporter _filterExporter;
 
         public PanelBuilder()
         {
@@ -47,8 +44,7 @@ namespace Edgar.Pipeline
             _dictionaryScorer = new LmDictionaryScorer(_settings.DictDir);
 
             // Output
-            // _exporter = new CsvExporter();
-            _cikExporter = new CIKMatchExporter();
+            _filterExporter = new FilterExporter();
         }
 
         public async Task RunAsync()
@@ -104,12 +100,8 @@ namespace Edgar.Pipeline
             await _exporter.WriteAsync(panelRows, outputPath);
 
             Console.WriteLine($"Pipeline complete. Rows written: {panelRows.Count}");*/
-
-            var cikmatchOutput = Path.Combine(_settings.OutputDir, filenameCikMatches);
         
-            await _cikExporter.WriteAsync(firms, cikmatchOutput);
-
-
+            await _filterExporter.WriteAsync(firms, Path.Combine(_settings.OutputDir, Config.Filepaths.filterMatches));
         }
 
         private async Task<PanelRow?> ProcessFilingAsync(Firm firm, Filing filing)

@@ -12,7 +12,6 @@ namespace Edgar.Export
             _endcontent = endcontent;
         }
 
-
         public async Task WriteAsync(IEnumerable<TRow> rows, string outputPath, bool overwrite = true)
         {
             if (rows == null) throw new ArgumentNullException(nameof(rows));
