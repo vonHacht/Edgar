@@ -1,0 +1,4 @@
+2026-02-11 13:34:55 [WRN] AttachReturns summary: processed=15346379, missingCCM=6400, missingFirm=0
+2026-02-11 13:50:31 [WRN] Missing CCM mappings: count=6, sample PERMNOs=[14607, 23052, 43095, 57154, 87838, 88681]
+2026-02-11 13:54:21 [WRN] Missing CCM mappings: count=6, sample PERMNOs=[14607, 23052, 43095, 57154, 87838, 88681]
+2026-02-11 21:18:04 [INF] Pipeline complete. Total filings found: 105956

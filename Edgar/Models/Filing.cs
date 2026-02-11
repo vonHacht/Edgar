@@ -1,32 +1,17 @@
-﻿using System;
-
-namespace Edgar.Models
+﻿namespace Edgar.Models
 {
     public class Filing
     {
-        public string Cik10 { get; set; } = string.Empty;
+        // master.idx fields
+        // CIK|Company Name|Form Type|Date Filed|Filename
 
-        /// <summary>
-        /// With dashes, e.g. "0000320193-23-000106"
-        /// </summary>
-        public string AccessionNumber { get; set; } = string.Empty;
+        public string CIK { get; set; } = string.Empty;
 
-        public DateTime FilingDate { get; set; }
+        public string CompanyName { get; set; } = string.Empty;
 
-        /// <summary>
-        /// Primary doc file name, e.g. "a10-k20230930.htm"
-        /// </summary>
-        public string PrimaryDocument { get; set; } = string.Empty;
+        public string FormType { get; set; } = string.Empty;
+        public DateTime DateFiled { get; set; }
 
-        /// <summary>
-        /// Optional: "2019-09-30" or similar if you parse it.
-        /// </summary>
-        public DateTime? PeriodOfReport { get; set; }
-
-        public string Form { get; set; } = "10-K";
-
-        // Convenience computed properties (no external dependencies)
-        public string AccessionNoNoDashes => AccessionNumber.Replace("-", "");
-        public string CikNoLeadingZeros => Cik10.TrimStart('0');
+        public string Filename { get; set; } = string.Empty;
     }
 }

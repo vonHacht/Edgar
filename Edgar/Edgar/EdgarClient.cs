@@ -1,9 +1,6 @@
-﻿using Edgar.Config;
-using System;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Net.Http.Headers;
+
+using Edgar.Config;
 
 namespace Edgar.Edgar
 {
@@ -27,9 +24,9 @@ namespace Edgar.Edgar
             _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd(settings.UserAgent);
 
             _httpClient.DefaultRequestHeaders.Accept.Clear();
-            _httpClient.DefaultRequestHeaders.Accept.Add(
-                new MediaTypeWithQualityHeaderValue("application/json")
-            );
+            _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("text/plain"));
+            _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("*/*"));
         }
 
         /// <summary>

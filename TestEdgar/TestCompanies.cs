@@ -1,5 +1,5 @@
-﻿using Edgar.Config;
-using Edgar.Companies;
+﻿using Edgar.Companies;
+using Edgar.Config;
 
 namespace TestEdgar
 {

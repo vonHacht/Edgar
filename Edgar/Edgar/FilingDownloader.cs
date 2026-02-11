@@ -1,11 +1,6 @@
-﻿using System;
-using System.IO;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Text;
 
 using Edgar.Config;
-using Edgar.Models;
 
 namespace Edgar.Edgar
 {
@@ -27,18 +22,16 @@ namespace Edgar.Edgar
         /// <summary>
         /// Returns the local file path to the primary doc HTML. Downloads it if not cached.
         /// </summary>
-        public async Task<string> GetOrDownloadPrimaryDocAsync(Filing filing, CancellationToken ct = default)
+        /*public async Task<string> GetOrDownloadPrimaryDocAsync(Filing filing, CancellationToken ct = default)
         {
             if (filing == null) throw new ArgumentNullException(nameof(filing));
-            if (string.IsNullOrWhiteSpace(filing.Cik10)) throw new ArgumentException("Filing.Cik10 is required.");
-            if (string.IsNullOrWhiteSpace(filing.AccessionNumber)) throw new ArgumentException("Filing.AccessionNumber is required.");
-            if (string.IsNullOrWhiteSpace(filing.PrimaryDocument)) throw new ArgumentException("Filing.PrimaryDocument is required.");
+            if (string.IsNullOrWhiteSpace(filing.CIK)) throw new ArgumentException("Filing.Cik10 is required.");
+            
+            
 
-            var cikNoZeros = NormalizeCikForArchivePath(filing.Cik10);
-            var accessionNoDashes = AccessionNoNoDashes(filing.AccessionNumber);
-
-            // Local cache path
-            var localDir = Path.Combine(_settings.RawDir, filing.Cik10, accessionNoDashes);
+            var cikNoZeros = NormalizeCikForArchivePath(filing.CIK);
+            
+            var localDir = Path.Combine(_settings.RawDir, filing.CIK, accessionNoDashes);
             Directory.CreateDirectory(localDir);
 
             var safeDocName = SanitizeFileName(filing.PrimaryDocument);
@@ -55,7 +48,7 @@ namespace Edgar.Edgar
             await File.WriteAllBytesAsync(localPath, bytes, ct);
 
             return localPath;
-        }
+        }*/
 
         /// <summary>
         /// Builds: https://www.sec.gov/Archives/edgar/data/{cikNoZeros}/{accessionNoNoDashes}/{primaryDocument}

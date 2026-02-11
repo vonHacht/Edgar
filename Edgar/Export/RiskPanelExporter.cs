@@ -1,5 +1,6 @@
-﻿using Edgar.Models;
-using System.Globalization;
+﻿using System.Globalization;
+
+using Edgar.Models;
 
 namespace Edgar.Export
 {

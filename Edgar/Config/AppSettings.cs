@@ -37,8 +37,6 @@
         // ----------------------------
         public int MinItem1AWordCount { get; init; } = 200;
 
-        private AppSettings() { }
-
         // ✅ Production-friendly entry point
         public static AppSettings Load()
         {

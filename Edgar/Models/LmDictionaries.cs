@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace Edgar.Models
+﻿namespace Edgar.Models
 {
     /// <summary>
     /// Holds LM-style dictionaries loaded into memory.

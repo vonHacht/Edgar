@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Edgar.Models
+﻿namespace Edgar.Models
 {
     /// <summary>
     /// One firm-filing observation (can be collapsed to firm-year later).

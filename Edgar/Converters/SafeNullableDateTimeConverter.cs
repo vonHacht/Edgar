@@ -1,9 +1,10 @@
-﻿using CsvHelper;
+﻿using System.Globalization;
+
+using CsvHelper;
 using CsvHelper.Configuration;
-using System.Globalization;
 using CsvHelper.TypeConversion;
 
-namespace Edgar.Converters 
+namespace Edgar.Converters
 {
     public sealed class SafeNullableDateTimeConverter : DateTimeConverter
     {

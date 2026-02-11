@@ -1,8 +1,9 @@
 ﻿using Edgar.Config;
+
 using Microsoft.Extensions.Logging;
+
 using Serilog;
 using Serilog.Extensions.Logging;
-using System.Runtime;
 
 namespace Edgar.Logging
 {

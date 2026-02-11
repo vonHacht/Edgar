@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using CsvHelper.Configuration.Attributes;
-using Edgar.Models;
+﻿using Edgar.Models;
 
 namespace Edgar.Filter
 {

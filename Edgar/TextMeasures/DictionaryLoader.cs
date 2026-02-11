@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-
-using Edgar.Models;
+﻿using Edgar.Models;
 
 namespace EDGARRiskPipeline.TextMeasures
 {

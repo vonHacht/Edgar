@@ -1,78 +1,101 @@
 ﻿namespace Edgar.Models
 {
-    public class CcmCssRecord 
+    public class CcmCssRecord
     {
+        // ---- CCM link fields ----
         public string GVKEY { get; set; } = default!;
+        public string? LINKPRIM { get; set; }
         public string LIID { get; set; } = default!;
+        public string? LINKTYPE { get; set; }
 
         public int? LPERMNO { get; set; }
         public int? LPERMCO { get; set; }
 
         public DateTime? LINKDT { get; set; }
 
-        // NOTE: Can be "E" (open-ended) or a date like "2018-12-31"
+        // Can be "E" (open-ended) or a date like "2018-12-31"
         public string? LINKENDDT { get; set; }
 
+        // ---- Security / company identifiers ----
         public string? iid { get; set; }
         public DateTime? datadate { get; set; }
 
         public string? tic { get; set; }
-        public string? cusip { get; set; }
-        public string? conm { get; set; }
-        public string? navm { get; set; }
-
-        public double? prccm { get; set; }
-        public double? prchm { get; set; }
-        public double? prclm { get; set; }
-
-        public double? trfm { get; set; }
-        public double? trt1m { get; set; }
-
-        public double? rawpm { get; set; }
-        public double? rawxm { get; set; }
-
-        public string? sph100 { get; set; }
-        public string? sphcusip { get; set; }
-        public string? sphname { get; set; }
-        public string? sphtic { get; set; }
-
-        public double? cshoq { get; set; }
-        public double? adrrm { get; set; }
-
-        public int? cmth { get; set; }
-        public double? cshom { get; set; }
-
-        public int? cyear { get; set; }
-        public string? mkvalincl { get; set; }
-
-        public int? exchg { get; set; }
-        public string? secstat { get; set; }
 
         // Leading zeros possible
-        public string? cik { get; set; }
+        public string? cusip { get; set; }
 
+        public string? conm { get; set; }
+
+        public string? curcddv { get; set; }
+        public string? curcdd { get; set; }
+
+        public string? cik { get; set; }   // keep string (leading zeros)
         public string? fic { get; set; }
         public string? conml { get; set; }
         public string? costat { get; set; }
-        public string? county { get; set; }
-
         public string? dlrsn { get; set; }
-        public string? ein { get; set; }
+        public string? ein { get; set; }   // keep string (often leading zeros)
 
         public int? fyrc { get; set; }
-
-        public int? ggroup { get; set; }
-        public int? gind { get; set; }
-        public int? gsector { get; set; }
-        public int? gsubind { get; set; }
-
         public string? idbflag { get; set; }
-        public string? phone { get; set; }
+        public string? incorp { get; set; }
+        public string? loc { get; set; }
+
+        public int? naics { get; set; }
+        public int? sic { get; set; }
+
+        public string? prican { get; set; }
+        public string? prirow { get; set; }
+        public string? priusa { get; set; }
+
+        public string? stko { get; set; }
 
         public DateTime? dldte { get; set; }
         public DateTime? ipodate { get; set; }
 
-        public int? curr_sp500_flag { get; set; }
+        // ---- Prices / trading ----
+        public double? prccd { get; set; }  // close
+        public double? prcod { get; set; }  // open
+        public double? prchd { get; set; }  // high
+        public double? prcld { get; set; }  // low
+
+        public double? ajexdi { get; set; }
+        public double? trfd { get; set; }
+
+        public double? cshoc { get; set; }   // shares outstanding
+        public double? cshtrd { get; set; }  // shares traded (volume)
+
+        public double? dvi { get; set; }
+        public double? eps { get; set; }
+        public double? epsmo { get; set; }
+
+        public double? prcstd { get; set; }
+
+        public int? exchg { get; set; }
+        public string? secstat { get; set; }
+        public string? tpci { get; set; }
+
+        // ---- Corporate actions / distributions ----
+        public double? capgn { get; set; }
+        public double? cheqv { get; set; }
+
+        public double? div { get; set; }
+        public double? divd { get; set; }
+        public string? divdpaydateind { get; set; }
+
+        public double? divsp { get; set; }
+        public string? dvrated { get; set; }
+        public string? paydateind { get; set; }
+
+        public DateTime? anncdate { get; set; }
+        public DateTime? capgnpaydate { get; set; }
+        public DateTime? cheqvpaydate { get; set; }
+        public DateTime? divdpaydate { get; set; }
+        public DateTime? divsppaydate { get; set; }
+
+        public DateTime? paydate { get; set; }
+        public DateTime? recorddate { get; set; }
     }
 }
 

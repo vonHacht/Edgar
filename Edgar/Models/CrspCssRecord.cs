@@ -1,5 +1,6 @@
-﻿using CsvHelper.Configuration;
-using System.Globalization;
+﻿using System.Globalization;
+
+using CsvHelper.Configuration;
 
 using Edgar.Converters;
 

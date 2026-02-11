@@ -1,13 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.NetworkInformation;
-using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Globalization;
 
 using Edgar.Models;
-
 
 namespace Edgar.Edgar
 {
@@ -24,136 +17,129 @@ namespace Edgar.Edgar
             _client = client;
         }
 
-        public async Task<List<Filing>> Get10KFilingsAsync(
-            Firm firm,
-            int startYear,
-            int endYear,
+        public static string BuildSubmissionsUrl(string cik10)
+            => $"https://data.sec.gov/submissions/CIK{cik10}.json";
+
+        public async Task<List<Filing>> Get10KFilingsForYearAsync(
+            int year,
             bool includeAmendments = false,
             CancellationToken ct = default)
         {
-            if (firm == null) throw new ArgumentNullException(nameof(firm));
-            if (string.IsNullOrWhiteSpace(firm.CIK)) throw new ArgumentException("Firm.CIK is required.");
-
-            var submissionsUrl = BuildSubmissionsUrl(firm.CIK);
-            var json = await _client.GetStringAsync(submissionsUrl, ct);
-
-            using var doc = JsonDocument.Parse(json);
-
-            var filings = ParseRecentFilings(doc, firm.CIK);
-
-            // Filter forms
             var allowedForms = includeAmendments
                 ? new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "10-K", "10-K/A" }
                 : new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "10-K" };
 
-            filings = filings
-                .Where(f => allowedForms.Contains(f.Form))
-                .Where(f => f.FilingDate.Year >= startYear && f.FilingDate.Year <= endYear)
-                .ToList();
+            var all = new List<Filing>();
 
-            // Select one filing per year (most recent filing date in that year)
-            return PickOnePerYear(filings);
-        }
-
-        public static string BuildSubmissionsUrl(string cik10)
-            => $"https://data.sec.gov/submissions/CIK{cik10}.json";
-
-        private static List<Filing> ParseRecentFilings(JsonDocument doc, string cik10)
-        {
-            // Path: root.filings.recent
-            // Arrays: form[], accessionNumber[], filingDate[], primaryDocument[], (optional) reportDate[]
-            var root = doc.RootElement;
-
-            if (!root.TryGetProperty("filings", out var filingsEl) ||
-                !filingsEl.TryGetProperty("recent", out var recentEl))
+            for (var q = 1; q <= 4; q++)
             {
-                return new List<Filing>();
+                var url = BuildMasterIndexUrl(year, q);
+                var text = await _client.GetStringAsync(url, ct);
+
+                foreach (var filing in ParseMasterIdx(text))
+                {
+                    if (!allowedForms.Contains(filing.FormType))
+                    {
+                        continue;
+                    }
+
+                    if (filing.DateFiled.Year != year)
+                    {
+                        continue;
+                    }
+
+                    all.Add(filing);
+                }
             }
 
-            var forms = seeArray(recentEl, "form");
-            var accs = seeArray(recentEl, "accessionNumber");
-            var dates = seeArray(recentEl, "filingDate");
-            var primaryDocs = seeArray(recentEl, "primaryDocument");
+            // Typical research choice: one 10-K per CIK per year (keep the latest filing date in that year)
+            return PickOnePerCikPerYear(all);
+        }
 
-            // Optional
-            var reportDates = tryArray(recentEl, "reportDate");
+        public static string BuildMasterIndexUrl(int year, int quarter)
+            => $"https://www.sec.gov/Archives/edgar/full-index/{year}/QTR{quarter}/master.idx";
 
-            var n = new[] { forms.Count, accs.Count, dates.Count, primaryDocs.Count }.Min();
+        private static IEnumerable<Filing> ParseMasterIdx(string masterIdxText)
+        {
+            // master.idx format (pipe-delimited after header):
+            // CIK|Company Name|Form Type|Date Filed|Filename
+            // Filename example: edgar/data/1000045/0001193125-10-001234.txt
 
-            var result = new List<Filing>(capacity: n);
+            using var sr = new StringReader(masterIdxText);
 
-            for (int i = 0; i < n; i++)
+            string? line;
+            var dataStarted = false;
+
+            while ((line = sr.ReadLine()) != null)
             {
-                var form = forms[i];
-                var acc = accs[i];
-                var dateStr = dates[i];
-                var primary = primaryDocs[i];
+                if (!dataStarted)
+                {
+                    // Data starts after a line containing "-----"
+                    if (line.StartsWith("-----", StringComparison.Ordinal))
+                    {
+                        dataStarted = true;
+                    }
 
-                if (string.IsNullOrWhiteSpace(form) ||
-                    string.IsNullOrWhiteSpace(acc) ||
-                    string.IsNullOrWhiteSpace(dateStr) ||
-                    string.IsNullOrWhiteSpace(primary))
+                    continue;
+                }
+
+                if (string.IsNullOrWhiteSpace(line))
                 {
                     continue;
                 }
 
-                if (!DateTime.TryParse(dateStr, out var filingDate))
-                    continue;
+                var parts = line.Split('|');
 
-                DateTime? periodOfReport = null;
-                if (reportDates != null && i < reportDates.Count && DateTime.TryParse(reportDates[i], out var rep))
-                    periodOfReport = rep;
-
-                result.Add(new Filing
+                if (parts.Length < 5)
                 {
-                    Cik10 = cik10,
-                    Form = form,
-                    AccessionNumber = acc,
-                    FilingDate = filingDate,
-                    PrimaryDocument = primary,
-                    PeriodOfReport = periodOfReport
-                });
-            }
+                    continue;
+                }
 
-            return result;
+                var cikRaw = parts[0].Trim();
+                var company = parts[1].Trim();
+                var form = parts[2].Trim();
+                var dateStr = parts[3].Trim();
+                var filename = parts[4].Trim(); // relative under /Archives/
 
-            static List<string> seeArray(JsonElement parent, string name)
-            {
-                if (!parent.TryGetProperty(name, out var el) || el.ValueKind != JsonValueKind.Array)
-                    return new List<string>();
+                if (!int.TryParse(cikRaw, out var cikInt))
+                {
+                    continue;
+                }
 
-                return el.EnumerateArray()
-                         .Select(x => seeString(x))
-                         .ToList();
-            }
+                if (!DateTime.TryParseExact(
+                        dateStr,
+                        "yyyy-MM-dd",
+                        CultureInfo.InvariantCulture,
+                        DateTimeStyles.None,
+                        out var filed))
+                {
+                    continue;
+                }
 
-            static List<string>? tryArray(JsonElement parent, string name)
-            {
-                if (!parent.TryGetProperty(name, out var el) || el.ValueKind != JsonValueKind.Array)
-                    return null;
+                // master.idx gives us the submission .txt filename. We can infer accession number from it.
+                // Example filename: edgar/data/{cik}/{accession-with-dashes}.txt
+                //var accessionWithExt = Path.GetFileName(filename); // 0001193125-10-001234.txt
+                //var accession = Path.GetFileNameWithoutExtension(accessionWithExt); // 0001193125-10-001234
 
-                return el.EnumerateArray()
-                         .Select(x => seeString(x))
-                         .ToList();
-            }
-
-            static string seeString(JsonElement el)
-            {
-                if (el.ValueKind == JsonValueKind.String)
-                    return el.GetString() ?? string.Empty;
-
-                // Sometimes fields can be null in SEC JSON; treat as empty string.
-                return string.Empty;
+                yield return new Filing
+                {
+                    CIK = cikInt.ToString("D10"),
+                    CompanyName = company,
+                    FormType = form,
+                    DateFiled = filed,
+                    Filename = filename,
+                };
             }
         }
 
-        private static List<Filing> PickOnePerYear(List<Filing> filings)
+        private static List<Filing> PickOnePerCikPerYear(List<Filing> filings)
         {
             return filings
-                .GroupBy(f => f.FilingDate.Year)
-                .Select(g => g.OrderByDescending(f => f.FilingDate).First())
-                .OrderBy(f => f.FilingDate)
+                .GroupBy(f => (f.CIK, Year: f.DateFiled.Year))
+                .Select(g => g.OrderByDescending(x => x.DateFiled).First())
+                .OrderBy(f => f.DateFiled)
                 .ToList();
         }
     }
 }
+

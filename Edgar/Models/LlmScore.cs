@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Edgar.Models
+﻿namespace Edgar.Models
 {
     /// <summary>
     /// Output of the LLM-based, context-aware risk scoring step.

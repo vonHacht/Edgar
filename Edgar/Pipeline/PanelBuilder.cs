@@ -2,14 +2,18 @@
 using Edgar.Config;
 using Edgar.Edgar;
 using Edgar.Export;
-using Edgar.Models;
+using Edgar.Logging;
 using Edgar.Parsing;
 using Edgar.TextMeasures;
+
+using Microsoft.Extensions.Logging;
 
 namespace Edgar.Pipeline
 {
     public class PanelBuilder
     {
+        private static readonly ILogger<Program> _logger =
+       EdgarLogger.CreateLogger<Program>();
 
         private readonly AppSettings _settings;
         private readonly CompaniesService _companiesService;
@@ -26,38 +30,43 @@ namespace Edgar.Pipeline
 
         private readonly FilterExporter _filterExporter;
 
+        public PanelBuilder(AppSettings settings)
+        {
+            _settings = settings;
+
+            _edgarClient = new EdgarClient(settings);
+            _indexService = new FilingIndexService(_edgarClient);
+            _downloader = new FilingDownloader(_edgarClient, settings);
+        }
+
         public PanelBuilder()
         {
-            // Configuration
             _settings = AppSettings.Load();
 
-            // Firms
-            _companiesService = new CompaniesService(_settings);
-
-            // EDGAR
             _edgarClient = new EdgarClient(_settings);
             _indexService = new FilingIndexService(_edgarClient);
             _downloader = new FilingDownloader(_edgarClient, _settings);
-
-            // Parsing + measures
-            _extractor = new ItemSectionExtractor();
-            _dictionaryScorer = new LmDictionaryScorer(_settings.DictDir);
-
-            // Output
-            _filterExporter = new FilterExporter();
         }
 
         public async Task RunAsync()
         {
             Console.WriteLine("Starting EDGAR risk pipeline...");
 
-            //var firms = LoadFirms();
-            var firms = _companiesService.LoadFirms();
-            var panelRows = new List<PanelRow>();
+            var years = new List<int>([
+                2010, 2011, 2012, 2013, 2014,
+                2015, 2016, 2017, 2018, 2019,
+                2020, 2021, 2022, 2023
+                ]);
 
-            foreach (var firm in firms)
+            int cntFilings = 0;
+
+            foreach (var year in years)
             {
+                var filings = await _indexService.Get10KFilingsForYearAsync(
+                    year
+                );
 
+                cntFilings += filings.Count;
 
                 /*Console.WriteLine($"Processing firm {firm.CIK}");
 
@@ -100,14 +109,16 @@ namespace Edgar.Pipeline
             await _exporter.WriteAsync(panelRows, outputPath);
 
             Console.WriteLine($"Pipeline complete. Rows written: {panelRows.Count}");*/
-        
-            await _filterExporter.WriteAsync(firms, Path.Combine(_settings.OutputDir, Config.Filepaths.filterMatches));
+
+            //await _filterExporter.WriteAsync(firms, Path.Combine(_settings.OutputDir, Config.Filepaths.filterMatches));
+
+            _logger.LogInformation("Pipeline complete. Total filings found: {Count}", cntFilings);
         }
 
-        private async Task<PanelRow?> ProcessFilingAsync(Firm firm, Filing filing)
+        /*private async Task<PanelRow?> ProcessFilingAsync(Firm firm, Filing filing)
         {
             // 1) Download filing HTML (cached)
-            var htmlPath = await _downloader.GetOrDownloadPrimaryDocAsync(filing);
+            //var htmlPath = await _downloader.GetOrDownloadPrimaryDocAsync(filing);
             var html = await File.ReadAllTextAsync(htmlPath);
 
             // 2) Clean + extract sections
@@ -130,9 +141,9 @@ namespace Edgar.Pipeline
                 Cik10 = firm.CIK ?? string.Empty,
                 Ticker = firm.Ticker,
 
-                AccessionNumber = filing.AccessionNumber,
-                FilingDate = filing.FilingDate,
-                Year = filing.FilingDate.Year,
+                //AccessionNumber = filing.AccessionNumber,
+                //FilingDate = filing.FilingDate,
+                //Year = filing.FilingDate.Year,
 
                 Item1AWordCount = sections.WordCountItem1A,
 
@@ -147,17 +158,8 @@ namespace Edgar.Pipeline
 
                 LocalHtmlPath = htmlPath
             };
-        }
+        }*/
 
-        private List<Firm> LoadFirms()
-        {
-            // For now: hardcoded test firms
-            // Later: replace with _companiesService.LoadFirms()
-            return new List<Firm>
-            {
-                new Firm { CIK = "0000320193", Ticker = "AAPL" },
-                new Firm { CIK = "0000789019", Ticker = "MSFT" }
-            };
-        }
+
     }
 }

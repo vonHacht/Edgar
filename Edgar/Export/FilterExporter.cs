@@ -1,8 +1,7 @@
-﻿using Edgar.Models;
-using System.Globalization;
+﻿using System.Globalization;
 using System.Text;
 
-using Edgar.Filter;
+using Edgar.Models;
 
 namespace Edgar.Export
 {
@@ -13,7 +12,7 @@ namespace Edgar.Export
         private int _numOfNonCIKMatches = 0;
 
 
-        public FilterExporter() : base(endcontent: true) {}
+        public FilterExporter() : base(endcontent: true) { }
 
         private static readonly CultureInfo CsvCulture = CultureInfo.InvariantCulture;
 
