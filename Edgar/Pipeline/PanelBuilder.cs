@@ -5,6 +5,8 @@ using Edgar.Export;
 using Edgar.Logging;
 using Edgar.Parsing;
 using Edgar.TextMeasures;
+using Edgar.Models;
+using Edgar.Utilities;
 
 using Microsoft.Extensions.Logging;
 
@@ -25,6 +27,8 @@ namespace Edgar.Pipeline
         private readonly ItemSectionExtractor _extractor;
         private readonly LmDictionaryScorer _dictionaryScorer;
 
+        private readonly Database.MongoDB _mongoDbEdgar;
+
         // private readonly CsvExporter _exporter;
         // private readonly CikLinker _linker;
 
@@ -37,6 +41,10 @@ namespace Edgar.Pipeline
             _edgarClient = new EdgarClient(settings);
             _indexService = new FilingIndexService(_edgarClient);
             _downloader = new FilingDownloader(_edgarClient, settings);
+
+            _extractor = new ItemSectionExtractor();
+
+            _mongoDbEdgar = new Database.MongoDB();
         }
 
         public PanelBuilder()
@@ -46,6 +54,10 @@ namespace Edgar.Pipeline
             _edgarClient = new EdgarClient(_settings);
             _indexService = new FilingIndexService(_edgarClient);
             _downloader = new FilingDownloader(_edgarClient, _settings);
+
+            _extractor = new ItemSectionExtractor();
+
+            _mongoDbEdgar = new Database.MongoDB();
         }
 
         public async Task RunAsync()
@@ -68,34 +80,19 @@ namespace Edgar.Pipeline
 
                 cntFilings += filings.Count;
 
-                /*Console.WriteLine($"Processing firm {firm.CIK}");
-
-                var filings = await _indexService.Get10KFilingsAsync(
-                    firm,
-                    _settings.StartYear,
-                    _settings.EndYear
-                );*/
-
-                /*foreach (var filing in filings)
+                foreach (var filing in filings)
                 {
                     try
                     {
-                        var row = await ProcessFilingAsync(firm, filing);
-                        if (row == null)
-                            continue;
-
-                        // Attach CUSIP / GVKEY / PERMNO (date-aware)
-                        //_linker.AttachLinks(row);
-
-                        panelRows.Add(row);
+                        await WriteToDBAsync(filing, year.ToString());                      
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine(
+                        /*Console.WriteLine(
                             $"Error {firm.CIK} {filing.AccessionNumber}: {ex.Message}"
-                        );
+                        );*/
                     }
-                }*/
+                }
             }
 
             // OPTIONAL but recommended:
@@ -115,28 +112,57 @@ namespace Edgar.Pipeline
             _logger.LogInformation("Pipeline complete. Total filings found: {Count}", cntFilings);
         }
 
-        /*private async Task<PanelRow?> ProcessFilingAsync(Firm firm, Filing filing)
+        private async Task WriteToDBAsync(Filing filing, string year)
         {
             // 1) Download filing HTML (cached)
-            //var htmlPath = await _downloader.GetOrDownloadPrimaryDocAsync(filing);
+            var htmlPath = await _downloader.GetOrDownloadPrimaryDocAsync(filing);
             var html = await File.ReadAllTextAsync(htmlPath);
 
             // 2) Clean + extract sections
             var cleanedText = HtmlCleaner.HtmlToText(html);
-            var sections = _extractor.Extract(cleanedText, _settings.ExtractItem7);
+            var sections = _extractor.Extract(cleanedText, true);
+
+            // 3) Write to DB
+            var doc = new FilingExtractDocument
+            {
+                Cik = filing.CIK,
+                AccessionNumber = Accession.GetAccessionFromFilename(filing.Filename),
+                FormType = filing.FormType,
+                DateFiled = filing.DateFiled,
+                Sections = sections
+            };
+
+            await _mongoDbEdgar.UpsertAsync(doc, year);
+
+        }
+
+        private async Task ProcessFilingAsync(Filing filing)
+        {
+            // 1) Download filing HTML (cached)
+            var htmlPath = await _downloader.GetOrDownloadPrimaryDocAsync(filing);
+            var html = await File.ReadAllTextAsync(htmlPath);
+
+            // 2) Clean + extract sections
+            var cleanedText = HtmlCleaner.HtmlToText(html);
+            var sections = _extractor.Extract(cleanedText, true);
+
+            // 3) Filtering based on extraction results
+
+
+            Console.WriteLine("STOP");
 
             // Basic quality filters (EDGAR-only)
-            if (!sections.FoundItem1A)
-                return null;
+            //if (!sections.FoundItem1A)
+            //    return null;
 
-            if (sections.WordCountItem1A < 200)
-                return null;
+            //if (sections.WordCountItem1A < 200)
+            //    return null;
 
             // 3) Dictionary-based scores
-            var dictScores = _dictionaryScorer.Score(sections.Item1AText);
+            //var dictScores = _dictionaryScorer.Score(sections.Item1AText);
 
             // 4) Build panel row
-            return new PanelRow
+            /*return new PanelRow
             {
                 Cik10 = firm.CIK ?? string.Empty,
                 Ticker = firm.Ticker,
@@ -157,8 +183,8 @@ namespace Edgar.Pipeline
                 UncertaintyFrequency = dictScores.UncertaintyFrequency,
 
                 LocalHtmlPath = htmlPath
-            };
-        }*/
+            };*/
+        }
 
 
     }

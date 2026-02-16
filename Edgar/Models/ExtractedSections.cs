@@ -8,9 +8,6 @@
         public bool FoundItem1A { get; set; }
         public bool FoundItem7 { get; set; }
 
-        public int WordCountItem1A { get; set; }
-        public int WordCountItem7 { get; set; }
-
         // Helpful for debugging / reproducibility
         public bool LooksLikeTocHit { get; set; }
         public string ExtractionMethodVersion { get; set; } = "v1";

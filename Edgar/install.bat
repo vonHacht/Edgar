@@ -8,6 +8,7 @@ dotnet add package Serilog
 dotnet add package Serilog.Extensions.Logging
 dotnet add package Serilog.Sinks.File
 dotnet add package Serilog.Sinks.Console
+dotnet add package MongoDB.Driver
 
 dotnet tool install -g dotnet-format
 

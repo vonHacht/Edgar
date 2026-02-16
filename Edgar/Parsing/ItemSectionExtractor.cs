@@ -50,8 +50,6 @@ namespace Edgar.Parsing
                 {
                     FoundItem1A = false,
                     FoundItem7 = false,
-                    WordCountItem1A = 0,
-                    WordCountItem7 = 0,
                     ExtractionMethodVersion = "v1"
                 };
             }
@@ -74,12 +72,10 @@ namespace Edgar.Parsing
             {
                 result.Item1AText = item1a;
                 result.FoundItem1A = true;
-                result.WordCountItem1A = CountWords(item1a);
             }
             else
             {
                 result.FoundItem1A = false;
-                result.WordCountItem1A = 0;
             }
 
             // ITEM 7 (optional)
@@ -91,12 +87,10 @@ namespace Edgar.Parsing
                 {
                     result.Item7Text = item7;
                     result.FoundItem7 = true;
-                    result.WordCountItem7 = CountWords(item7);
                 }
                 else
                 {
                     result.FoundItem7 = false;
-                    result.WordCountItem7 = 0;
                 }
             }
 

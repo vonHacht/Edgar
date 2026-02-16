@@ -34,9 +34,9 @@ namespace Edgar.Export
             return string.Join(Delimiter,
                 Esc(f.CIK),
                 Esc(f.LatestCompanyName),
-                Esc(f.Ticker),
-                Esc(Filter.Filter.NonMatchingCIK(f).ToString()),
-                Esc(Filter.Filter.Delisted(f).ToString())
+                Esc(f.Ticker)
+                //Esc(Filter.Filter.NonMatchingCIK(f).ToString()),
+                //Esc(Filter.Filter.Delisted(f).ToString())
             );
         }
 
@@ -44,9 +44,9 @@ namespace Edgar.Export
         {
             _rowCount = list.Count;
 
-            _numOfDelisted = list.ToList().Count(f => Filter.Filter.Delisted(f));
+            //_numOfDelisted = list.ToList().Count(f => Filter.Filter.Delisted(f));
 
-            _numOfNonCIKMatches = list.ToList().Count(f => Filter.Filter.NonMatchingCIK(f));
+            //_numOfNonCIKMatches = list.ToList().Count(f => Filter.Filter.NonMatchingCIK(f));
         }
 
         public override string EndContent()

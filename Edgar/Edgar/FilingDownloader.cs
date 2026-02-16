@@ -1,6 +1,9 @@
 ﻿using System.Text;
 
 using Edgar.Config;
+using Edgar.Models;
+
+using Edgar.Utilities;
 
 namespace Edgar.Edgar
 {
@@ -22,45 +25,43 @@ namespace Edgar.Edgar
         /// <summary>
         /// Returns the local file path to the primary doc HTML. Downloads it if not cached.
         /// </summary>
-        /*public async Task<string> GetOrDownloadPrimaryDocAsync(Filing filing, CancellationToken ct = default)
+        public async Task<string> GetOrDownloadPrimaryDocAsync(Filing filing, CancellationToken ct = default)
         {
             if (filing == null) throw new ArgumentNullException(nameof(filing));
-            if (string.IsNullOrWhiteSpace(filing.CIK)) throw new ArgumentException("Filing.Cik10 is required.");
-            
-            
+            if (string.IsNullOrWhiteSpace(filing.CIK)) throw new ArgumentException("Filing.CIK is required.");
 
             var cikNoZeros = NormalizeCikForArchivePath(filing.CIK);
             
-            var localDir = Path.Combine(_settings.RawDir, filing.CIK, accessionNoDashes);
+            var accNumNoDashes = Accession.GetAccessionFromFilename(filing.Filename, true);
+            var accNumDashed = Accession.GetAccessionFile(filing.Filename);
+
+            var localDir = Path.Combine(_settings.RawDir, filing.CIK, accNumNoDashes);
+
             Directory.CreateDirectory(localDir);
 
-            var safeDocName = SanitizeFileName(filing.PrimaryDocument);
-            var localPath = Path.Combine(localDir, safeDocName);
+            var localPath = Path.Combine(localDir, accNumDashed);
 
             if (File.Exists(localPath) && !_settings.OverwriteRawFiles)
                 return localPath;
 
-            // Download URL (primary doc)
-            var url = BuildPrimaryDocUrl(cikNoZeros, accessionNoDashes, filing.PrimaryDocument);
+            var url = BuildPrimaryDocUrl(cikNoZeros, accNumNoDashes, accNumDashed);
 
             // Fetch bytes and write
             var bytes = await _client.GetBytesAsync(url, ct);
             await File.WriteAllBytesAsync(localPath, bytes, ct);
 
             return localPath;
-        }*/
-
-        /// <summary>
-        /// Builds: https://www.sec.gov/Archives/edgar/data/{cikNoZeros}/{accessionNoNoDashes}/{primaryDocument}
-        /// </summary>
-        public static string BuildPrimaryDocUrl(string cikNoZeros, string accessionNoNoDashes, string primaryDocument)
-        {
-            // primaryDocument often already safe, but we avoid encoding changes; EDGAR paths are literal.
-            return $"https://www.sec.gov/Archives/edgar/data/{cikNoZeros}/{accessionNoNoDashes}/{primaryDocument}";
         }
 
-        public static string AccessionNoNoDashes(string accessionNumber)
-            => accessionNumber.Replace("-", "", StringComparison.Ordinal);
+        // https://www.sec.gov/Archives/edgar/data/1385329/00010629931000002/0001062993-10-000002.txt
+        public static string BuildPrimaryDocUrl(string cikNoZeros, string accNumNoDashes, string accNumDashed)
+        {
+            // primaryDocument often already safe, but we avoid encoding changes; EDGAR paths are literal.
+            return $"https://www.sec.gov/Archives/edgar/data/{cikNoZeros}/{accNumNoDashes}/{accNumDashed}";
+        }
+
+        public static string GetAccessionWithoutDashes(string fileName)
+            => Path.GetFileNameWithoutExtension(fileName).Replace("-", "");
 
         public static string NormalizeCikForArchivePath(string cik10)
         {
@@ -69,6 +70,16 @@ namespace Edgar.Edgar
             trimmed = trimmed.TrimStart('0');
             return string.IsNullOrEmpty(trimmed) ? "0" : trimmed;
         }
+
+        /*private static (string Directory, string FileName) NormalizePathAndDirectoryPath(string path) {
+
+            string normalized = path.Replace('/', Path.DirectorySeparatorChar);
+
+            string directory = Path.GetDirectoryName(normalized)!;
+            string fileName = Path.GetFileName(normalized);
+
+            return (directory, fileName);
+        }*/
 
         private static string SanitizeFileName(string fileName)
         {
