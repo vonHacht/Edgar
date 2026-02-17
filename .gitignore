@@ -120,4 +120,6 @@ dmypy.json
 # Special
 # =========================
 
-Edgar/Data
+Edgar/Data/raw
+Edgar/Data/companies
+Edgar/Data/processed
