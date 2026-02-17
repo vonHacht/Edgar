@@ -35,8 +35,8 @@ namespace Edgar.Export
                 Esc(f.CIK),
                 Esc(f.LatestCompanyName),
                 Esc(f.Ticker)
-                //Esc(Filter.Filter.NonMatchingCIK(f).ToString()),
-                //Esc(Filter.Filter.Delisted(f).ToString())
+            //Esc(Filter.Filter.NonMatchingCIK(f).ToString()),
+            //Esc(Filter.Filter.Delisted(f).ToString())
             );
         }
 

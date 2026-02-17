@@ -1,11 +1,12 @@
 ﻿using Edgar.Companies;
 using Edgar.Config;
+using Edgar.Database;
 using Edgar.Edgar;
 using Edgar.Export;
+using Edgar.Import;
 using Edgar.Logging;
-using Edgar.Parsing;
-using Edgar.TextMeasures;
 using Edgar.Models;
+using Edgar.Parsing;
 using Edgar.Utilities;
 
 using Microsoft.Extensions.Logging;
@@ -18,19 +19,17 @@ namespace Edgar.Pipeline
        EdgarLogger.CreateLogger<Program>();
 
         private readonly AppSettings _settings;
-        private readonly CompaniesService _companiesService;
 
         private readonly EdgarClient _edgarClient;
         private readonly FilingIndexService _indexService;
         private readonly FilingDownloader _downloader;
 
         private readonly ItemSectionExtractor _extractor;
-        private readonly LmDictionaryScorer _dictionaryScorer;
 
-        private readonly Database.MongoDB _mongoDbEdgar;
+        private readonly CcmImporter _ccmImporter;
+        private readonly CrspImporter _crspImporter;
 
-        // private readonly CsvExporter _exporter;
-        // private readonly CikLinker _linker;
+        private readonly mDb _mongoDbEdgar;
 
         private readonly FilterExporter _filterExporter;
 
@@ -44,7 +43,10 @@ namespace Edgar.Pipeline
 
             _extractor = new ItemSectionExtractor();
 
-            _mongoDbEdgar = new Database.MongoDB();
+            _ccmImporter = new CcmImporter(settings);
+            _crspImporter = new CrspImporter(settings);
+
+            _mongoDbEdgar = new mDb();
         }
 
         public PanelBuilder()
@@ -55,9 +57,12 @@ namespace Edgar.Pipeline
             _indexService = new FilingIndexService(_edgarClient);
             _downloader = new FilingDownloader(_edgarClient, _settings);
 
+            _ccmImporter = new CcmImporter(_settings);
+            _crspImporter = new CrspImporter(_settings);
+
             _extractor = new ItemSectionExtractor();
 
-            _mongoDbEdgar = new Database.MongoDB();
+            _mongoDbEdgar = new mDb();
         }
 
         public async Task RunAsync()
@@ -84,7 +89,7 @@ namespace Edgar.Pipeline
                 {
                     try
                     {
-                        await WriteToDBAsync(filing, year.ToString());                      
+                        await WriteToDBAsync(filing, year.ToString());
                     }
                     catch (Exception ex)
                     {
@@ -94,20 +99,6 @@ namespace Edgar.Pipeline
                     }
                 }
             }
-
-            // OPTIONAL but recommended:
-            // enforce "first filing per firm-year"
-            /*panelRows = panelRows
-                .GroupBy(r => (r.Cik10, r.Year))
-                .Select(g => g.OrderBy(r => r.FilingDate).First())
-                .ToList();
-
-            var outputPath = Path.Combine(_settings.OutputDir, filenameRiskpanel);
-            await _exporter.WriteAsync(panelRows, outputPath);
-
-            Console.WriteLine($"Pipeline complete. Rows written: {panelRows.Count}");*/
-
-            //await _filterExporter.WriteAsync(firms, Path.Combine(_settings.OutputDir, Config.Filepaths.filterMatches));
 
             _logger.LogInformation("Pipeline complete. Total filings found: {Count}", cntFilings);
         }
@@ -122,18 +113,42 @@ namespace Edgar.Pipeline
             var cleanedText = HtmlCleaner.HtmlToText(html);
             var sections = _extractor.Extract(cleanedText, true);
 
-            // 3) Write to DB
-            var doc = new FilingExtractDocument
+            // 3) Find CCM
+            var ccm = _ccmImporter.ReadByCik(filing.CIK, year);
+
+            if (ccm.Count != 0)
             {
-                Cik = filing.CIK,
-                AccessionNumber = Accession.GetAccessionFromFilename(filing.Filename),
-                FormType = filing.FormType,
-                DateFiled = filing.DateFiled,
-                Sections = sections
-            };
+                int permno = ccm[0].permno ?? 0;
 
-            await _mongoDbEdgar.UpsertAsync(doc, year);
+                // 4) Find CRSP
+                var tradingDays = _crspImporter.ReadByPermno(permno, year);
 
+                if (tradingDays.Count != 0)
+                {
+                    // 5) Write to DB
+                    var doc = new FilingExtractDocument
+                    {
+                        Name = ccm[0].CompanyName ?? string.Empty,
+                        Ticker = ccm[0].Ticker,
+                        Cik = filing.CIK,
+                        permno = permno,
+                        permco = ccm[0].permco ?? 0,
+                        AccessionNumber = Accession.GetAccessionFromFilename(filing.Filename),
+                        FormType = filing.FormType,
+                        DateFiled = filing.DateFiled,
+                        Sections = sections,
+                        TradingDays = tradingDays
+                    };
+
+                    await _mongoDbEdgar.UpsertAsync(doc, year);
+
+                    Console.WriteLine("");
+                }
+            }
+            else
+            {
+                _logger.LogWarning("No CCM match for CIK {Cik} in year {Year}", filing.CIK, year);
+            }
         }
 
         private async Task ProcessFilingAsync(Filing filing)

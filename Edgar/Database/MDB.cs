@@ -6,7 +6,7 @@ using MongoDB.Driver;
 
 namespace Edgar.Database
 {
-    public sealed class MongoDb
+    public sealed class mDb
     {
         private static readonly ReplaceOptions UpsertReplaceOptions = new() { IsUpsert = true };
         private static readonly FilterDefinitionBuilder<FilingExtractDocument> F = Builders<FilingExtractDocument>.Filter;
@@ -14,10 +14,10 @@ namespace Edgar.Database
         private readonly IMongoDatabase _db;
         private readonly ConcurrentDictionary<string, IMongoCollection<FilingExtractDocument>> _collections = new();
 
-        public MongoDb(string connectionString, string databaseName)
+        public mDb()
         {
-            var client = new MongoClient(connectionString);
-            _db = client.GetDatabase(databaseName);
+            var client = new MongoClient(Config.Database.localhost);
+            _db = client.GetDatabase(Config.Database.edgarDbName);
         }
 
         private IMongoCollection<FilingExtractDocument> GetCollection(string name) =>

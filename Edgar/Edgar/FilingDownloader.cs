@@ -1,6 +1,4 @@
-﻿using System.Text;
-
-using Edgar.Config;
+﻿using Edgar.Config;
 using Edgar.Models;
 
 using Edgar.Utilities;
@@ -31,7 +29,7 @@ namespace Edgar.Edgar
             if (string.IsNullOrWhiteSpace(filing.CIK)) throw new ArgumentException("Filing.CIK is required.");
 
             var cikNoZeros = NormalizeCikForArchivePath(filing.CIK);
-            
+
             var accNumNoDashes = Accession.GetAccessionFromFilename(filing.Filename, true);
             var accNumDashed = Accession.GetAccessionFile(filing.Filename);
 
@@ -71,27 +69,5 @@ namespace Edgar.Edgar
             return string.IsNullOrEmpty(trimmed) ? "0" : trimmed;
         }
 
-        /*private static (string Directory, string FileName) NormalizePathAndDirectoryPath(string path) {
-
-            string normalized = path.Replace('/', Path.DirectorySeparatorChar);
-
-            string directory = Path.GetDirectoryName(normalized)!;
-            string fileName = Path.GetFileName(normalized);
-
-            return (directory, fileName);
-        }*/
-
-        private static string SanitizeFileName(string fileName)
-        {
-            // EDGAR filenames are usually safe already. This is belt-and-suspenders.
-            // Replace any invalid characters to keep Windows happy.
-            var invalid = Path.GetInvalidFileNameChars();
-            var sb = new StringBuilder(fileName.Length);
-            foreach (var ch in fileName)
-            {
-                sb.Append(Array.IndexOf(invalid, ch) >= 0 ? '_' : ch);
-            }
-            return sb.ToString();
-        }
     }
 }
