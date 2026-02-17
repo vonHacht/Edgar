@@ -12,6 +12,8 @@ dotnet add package MongoDB.Driver
 
 dotnet tool install -g dotnet-format
 
+dotnet add package DotNetEnv
+
 echo.
 echo ================================
 echo Done!

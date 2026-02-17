@@ -3,7 +3,7 @@ using MongoDB.Bson.Serialization.Attributes;
 
 namespace Edgar.Models
 {
-    public class FilingExtractDocument
+    public class DatabaseDocument
     {
         [BsonId]
         [BsonIgnoreIfDefault]
@@ -16,14 +16,7 @@ namespace Edgar.Models
 
         public string Cik { get; set; } = string.Empty;                 // "0000012345"
         public string AccessionNumber { get; set; } = string.Empty;     // "0000012345-23-000012"
-        public string FormType { get; set; } = "10-K";                  // optional
-        public DateTime DateFiled { get; set; }                        // optional
-
-        public int permno { get; set; }
-        public int permco { get; set; }
-
-        public ExtractedSections Sections { get; set; } = new();
-
-        public List<FirmTradingDay> TradingDays { get; set; } = new();
+        public string FormType { get; set; } = "10-K";
+        public DateTime DateFiled { get; set; }
     }
 }

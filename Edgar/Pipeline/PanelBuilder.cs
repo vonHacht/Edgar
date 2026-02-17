@@ -1,8 +1,9 @@
-﻿using Edgar.Companies;
+﻿using System.Globalization;
+
+using Edgar.Companies;
 using Edgar.Config;
 using Edgar.Database;
 using Edgar.Edgar;
-using Edgar.Export;
 using Edgar.Import;
 using Edgar.Logging;
 using Edgar.Models;
@@ -13,194 +14,178 @@ using Microsoft.Extensions.Logging;
 
 namespace Edgar.Pipeline
 {
-    public class PanelBuilder
+    public sealed class PanelBuilder
     {
-        private static readonly ILogger<Program> _logger =
-       EdgarLogger.CreateLogger<Program>();
+        private static readonly ILogger<Program> _logger = EdgarLogger.CreateLogger<Program>();
 
         private readonly AppSettings _settings;
-
         private readonly EdgarClient _edgarClient;
         private readonly FilingIndexService _indexService;
         private readonly FilingDownloader _downloader;
-
         private readonly ItemSectionExtractor _extractor;
-
         private readonly CcmImporter _ccmImporter;
         private readonly CrspImporter _crspImporter;
+        private readonly MongoDb _mongoDbEdgar;
 
-        private readonly mDb _mongoDbEdgar;
-
-        private readonly FilterExporter _filterExporter;
-
-        public PanelBuilder(AppSettings settings)
+        public PanelBuilder(AppSettings? settings = null)
         {
-            _settings = settings;
-
-            _edgarClient = new EdgarClient(settings);
-            _indexService = new FilingIndexService(_edgarClient);
-            _downloader = new FilingDownloader(_edgarClient, settings);
-
-            _extractor = new ItemSectionExtractor();
-
-            _ccmImporter = new CcmImporter(settings);
-            _crspImporter = new CrspImporter(settings);
-
-            _mongoDbEdgar = new mDb();
-        }
-
-        public PanelBuilder()
-        {
-            _settings = AppSettings.Load();
+            _settings = settings ?? AppSettings.Load();
 
             _edgarClient = new EdgarClient(_settings);
             _indexService = new FilingIndexService(_edgarClient);
             _downloader = new FilingDownloader(_edgarClient, _settings);
 
+            _extractor = new ItemSectionExtractor();
             _ccmImporter = new CcmImporter(_settings);
             _crspImporter = new CrspImporter(_settings);
 
-            _extractor = new ItemSectionExtractor();
-
-            _mongoDbEdgar = new mDb();
+            _mongoDbEdgar = new MongoDb();
         }
 
-        public async Task RunAsync()
+        public async Task RunAsync(CancellationToken ct = default)
         {
-            Console.WriteLine("Starting EDGAR risk pipeline...");
+            _logger.LogInformation("Starting EDGAR risk pipeline...");
 
-            var years = new List<int>([
+            var years = new[]
+            {
                 2010, 2011, 2012, 2013, 2014,
                 2015, 2016, 2017, 2018, 2019,
                 2020, 2021, 2022, 2023
-                ]);
+            };
 
-            int cntFilings = 0;
+            var totalFilings = 0;
 
             foreach (var year in years)
             {
-                var filings = await _indexService.Get10KFilingsForYearAsync(
-                    year
-                );
+                ct.ThrowIfCancellationRequested();
 
-                cntFilings += filings.Count;
+                var filings = await _indexService.Get10KFilingsForYearAsync(year);
+                totalFilings += filings.Count;
 
                 foreach (var filing in filings)
                 {
+                    ct.ThrowIfCancellationRequested();
+
                     try
                     {
-                        await WriteToDBAsync(filing, year.ToString());
+                        await ProcessFilingAsync(filing, year, ct);
                     }
                     catch (Exception ex)
                     {
-                        /*Console.WriteLine(
-                            $"Error {firm.CIK} {filing.AccessionNumber}: {ex.Message}"
-                        );*/
+                        _logger.LogError(ex, "Error processing filing {CIK}", filing.CIK);
                     }
                 }
             }
 
-            _logger.LogInformation("Pipeline complete. Total filings found: {Count}", cntFilings);
+            _logger.LogInformation("Pipeline complete. Total filings found: {Count}", totalFilings);
         }
 
-        private async Task WriteToDBAsync(Filing filing, string year)
+        private async Task ProcessFilingAsync(Filing filing, int year, CancellationToken ct)
         {
-            // 1) Download filing HTML (cached)
+            var yearKey = year.ToString(CultureInfo.InvariantCulture);
+
+            // 1) Download filing HTML (cached) + read
             var htmlPath = await _downloader.GetOrDownloadPrimaryDocAsync(filing);
-            var html = await File.ReadAllTextAsync(htmlPath);
+            var html = await File.ReadAllTextAsync(htmlPath, ct);
 
             // 2) Clean + extract sections
             var cleanedText = HtmlCleaner.HtmlToText(html);
             var sections = _extractor.Extract(cleanedText, true);
 
-            // 3) Find CCM
-            var ccm = _ccmImporter.ReadByCik(filing.CIK, year);
+            // 3) Find CCM match(es)
+            var ccmMatches = _ccmImporter.ReadByCik(filing.CIK, yearKey);
+            var ccm = ccmMatches.FirstOrDefault();
 
-            if (ccm.Count != 0)
+            if (ccm is null)
             {
-                int permno = ccm[0].permno ?? 0;
-
-                // 4) Find CRSP
-                var tradingDays = _crspImporter.ReadByPermno(permno, year);
-
-                if (tradingDays.Count != 0)
-                {
-                    // 5) Write to DB
-                    var doc = new FilingExtractDocument
+                await UpsertUncompleteAsync(
+                    yearKey,
+                    new DatabaseUncompleteDocument
                     {
-                        Name = ccm[0].CompanyName ?? string.Empty,
-                        Ticker = ccm[0].Ticker,
                         Cik = filing.CIK,
-                        permno = permno,
-                        permco = ccm[0].permco ?? 0,
+                        CcmFound = false,
+                        CrspFound = false,
+                        AccessionNumber = Accession.GetAccessionFromFilename(filing.Filename),
+                    },
+                    ct);
+
+                return;
+            }
+
+            // permno should not silently become 0 (0 will cause wasted scans / wrong joins)
+            if (ccm.permno is null)
+            {
+                await UpsertUncompleteAsync(
+                    yearKey,
+                    new DatabaseUncompleteDocument
+                    {
+                        Cik = filing.CIK,
+                        Name = ccm.CompanyName ?? string.Empty,
+                        Ticker = ccm.Ticker,
+                        CcmFound = true,
+                        CrspFound = false,
                         AccessionNumber = Accession.GetAccessionFromFilename(filing.Filename),
                         FormType = filing.FormType,
-                        DateFiled = filing.DateFiled,
-                        Sections = sections,
-                        TradingDays = tradingDays
-                    };
+                        DateFiled = filing.DateFiled
+                    },
+                    ct);
 
-                    await _mongoDbEdgar.UpsertAsync(doc, year);
-
-                    Console.WriteLine("");
-                }
+                return;
             }
-            else
+
+            var permno = ccm.permno.Value;
+
+            // 4) Find CRSP trading days
+            var tradingDays = _crspImporter.ReadByPermno(permno, yearKey);
+
+            if (tradingDays.Count == 0)
             {
-                _logger.LogWarning("No CCM match for CIK {Cik} in year {Year}", filing.CIK, year);
+                await UpsertUncompleteAsync(
+                    yearKey,
+                    new DatabaseUncompleteDocument
+                    {
+                        Cik = filing.CIK,
+                        Name = ccm.CompanyName ?? string.Empty,
+                        Ticker = ccm.Ticker,
+                        CcmFound = true,
+                        CrspFound = false,
+                        AccessionNumber = Accession.GetAccessionFromFilename(filing.Filename),
+                        FormType = filing.FormType,
+                        DateFiled = filing.DateFiled
+                    },
+                    ct);
+
+                return;
             }
+
+            // 5) Write complete document
+            var doc = new DatabaseCompleteDocument
+            {
+                Name = ccm.CompanyName ?? string.Empty,
+                Ticker = ccm.Ticker,
+                Cik = filing.CIK,
+
+                permno = permno,
+                permco = ccm.permco ?? 0,
+
+                AccessionNumber = Accession.GetAccessionFromFilename(filing.Filename),
+                FormType = filing.FormType,
+                DateFiled = filing.DateFiled,
+
+                Sections = sections,
+                TradingDays = tradingDays
+            };
+
+            await _mongoDbEdgar.UpsertCompleteAsync(doc, yearKey);
+
+            Console.WriteLine("");
         }
 
-        private async Task ProcessFilingAsync(Filing filing)
+        private Task UpsertUncompleteAsync(string yearKey, DatabaseUncompleteDocument doc, CancellationToken ct)
         {
-            // 1) Download filing HTML (cached)
-            var htmlPath = await _downloader.GetOrDownloadPrimaryDocAsync(filing);
-            var html = await File.ReadAllTextAsync(htmlPath);
-
-            // 2) Clean + extract sections
-            var cleanedText = HtmlCleaner.HtmlToText(html);
-            var sections = _extractor.Extract(cleanedText, true);
-
-            // 3) Filtering based on extraction results
-
-
-            Console.WriteLine("STOP");
-
-            // Basic quality filters (EDGAR-only)
-            //if (!sections.FoundItem1A)
-            //    return null;
-
-            //if (sections.WordCountItem1A < 200)
-            //    return null;
-
-            // 3) Dictionary-based scores
-            //var dictScores = _dictionaryScorer.Score(sections.Item1AText);
-
-            // 4) Build panel row
-            /*return new PanelRow
-            {
-                Cik10 = firm.CIK ?? string.Empty,
-                Ticker = firm.Ticker,
-
-                //AccessionNumber = filing.AccessionNumber,
-                //FilingDate = filing.FilingDate,
-                //Year = filing.FilingDate.Year,
-
-                Item1AWordCount = sections.WordCountItem1A,
-
-                RiskCount = dictScores.RiskCount,
-                RiskFrequency = dictScores.RiskFrequency,
-
-                NegativeCount = dictScores.NegativeCount,
-                NegativeFrequency = dictScores.NegativeFrequency,
-
-                UncertaintyCount = dictScores.UncertaintyCount,
-                UncertaintyFrequency = dictScores.UncertaintyFrequency,
-
-                LocalHtmlPath = htmlPath
-            };*/
+            // If your mDb methods accept CancellationToken, pass it through.
+            // Otherwise ct is just for future-proofing.
+            return _mongoDbEdgar.UpsertUncompleteAsync(doc, yearKey);
         }
-
-
     }
 }

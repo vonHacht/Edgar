@@ -1,8 +1,33 @@
 ﻿namespace Edgar.Config
 {
-    public class Database
+    public sealed class DatabaseOptions
     {
-        public static readonly string localhost = "mongodb://localhost:27017";
-        public static readonly string edgarDbName = "edgar";
+        public const string DefaultLocalHost = "mongodb://localhost:27017";
+        public const string DefaultEdgarDbName = "edgar";
+        public const string DefaultEdgarLoggingDbName = "edgarLogging";
+
+        public string Host { get; }
+        public string EdgarDbName { get; }
+        public string EdgarLoggingDbName { get; }
+
+        public DatabaseOptions(
+            string? host = null,
+            string? edgarDbName = null,
+            string? edgarLoggingDbName = null)
+        {
+            Host = string.IsNullOrWhiteSpace(host) ? DefaultLocalHost : host;
+            EdgarDbName = string.IsNullOrWhiteSpace(edgarDbName) ? DefaultEdgarDbName : edgarDbName;
+            EdgarLoggingDbName = string.IsNullOrWhiteSpace(edgarLoggingDbName) ? DefaultEdgarLoggingDbName : edgarLoggingDbName;
+        }
+
+        public static DatabaseOptions FromEnvironment()
+        {
+            return new DatabaseOptions(
+                host: Environment.GetEnvironmentVariable("DB_HOST"),
+                edgarDbName: Environment.GetEnvironmentVariable("DB_NAME"),
+                edgarLoggingDbName: Environment.GetEnvironmentVariable("DB_LOGGING_NAME")
+            );
+        }
     }
 }
+
