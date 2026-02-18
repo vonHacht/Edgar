@@ -3,13 +3,14 @@
 using Microsoft.Extensions.Logging;
 
 using Serilog;
-using Serilog.Extensions.Logging;
+using Serilog.Events;
 
 namespace Edgar.Logging
 {
     public static class EdgarLogger
     {
         private static ILoggerFactory? _loggerFactory;
+        private static readonly object _lock = new();
 
         private static AppSettings _settings = AppSettings.Load();
 
@@ -24,19 +25,64 @@ namespace Edgar.Logging
             if (_loggerFactory != null)
                 return;
 
-            Log.Logger = new LoggerConfiguration()
-                .MinimumLevel.Information()
-                .WriteTo.Console()
-                .WriteTo.File(
-                    Path.Combine(_settings.OutputDir, Config.Filepaths.logging),
-                    rollingInterval: RollingInterval.Day,
-                    retainedFileCountLimit: 7,
-                    outputTemplate:
-                        "{Timestamp:yyyy-MM-dd HH:mm:ss} [{Level:u3}] {Message:lj}{NewLine}{Exception}"
-                )
-                .CreateLogger();
+            lock (_lock)
+            {
+                if (_loggerFactory != null)
+                    return;
 
-            _loggerFactory = new SerilogLoggerFactory(Log.Logger);
+                Directory.CreateDirectory(_settings.OutputDir);
+
+                var level = ParseLevel(_settings.LogLevel);
+
+                var config = new LoggerConfiguration()
+                    .MinimumLevel.Is(level)
+                    .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
+                    .MinimumLevel.Override("System", LogEventLevel.Warning)
+                    .Enrich.FromLogContext();
+
+                if (_settings.LogToConsole)
+                {
+                    config = config.WriteTo.Console(
+                        outputTemplate:
+                        "{Timestamp:HH:mm:ss} [{Level:u3}] {Message:lj}{NewLine}{Exception}"
+                    );
+                }
+
+                if (_settings.LogToFile)
+                {
+                    config = config.WriteTo.File(
+                        Path.Combine(_settings.OutputDir, Config.Filepaths.logging),
+                        rollingInterval: RollingInterval.Day,
+                        retainedFileCountLimit: 7,
+                        outputTemplate:
+                        "{Timestamp:yyyy-MM-dd HH:mm:ss} [{Level:u3}] {Message:lj}{NewLine}{Exception}"
+                    );
+                }
+
+                Log.Logger = config.CreateLogger();
+
+                _loggerFactory = LoggerFactory.Create(builder =>
+                {
+                    builder.ClearProviders();
+                    builder.AddSerilog(Log.Logger, dispose: true);
+                    builder.SetMinimumLevel(LogLevel.Trace);
+                });
+            }
+        }
+
+        private static LogEventLevel ParseLevel(string? level)
+        {
+            return level?.ToLowerInvariant() switch
+            {
+                "verbose" => LogEventLevel.Verbose,
+                "debug" => LogEventLevel.Debug,
+                "information" => LogEventLevel.Information,
+                "warning" => LogEventLevel.Warning,
+                "error" => LogEventLevel.Error,
+                "fatal" => LogEventLevel.Fatal,
+                _ => LogEventLevel.Information
+            };
         }
     }
 }
+

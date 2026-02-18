@@ -2,6 +2,7 @@
 echo ================================
 echo Installing packages & tools
 echo ================================
+cd Edgar
 
 dotnet add package Microsoft.Extensions.Logging
 dotnet add package Serilog

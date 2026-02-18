@@ -1,9 +1,9 @@
 ﻿using System.Collections.Concurrent;
 
+using Edgar.Config;
 using Edgar.Models;
 
-using Edgar.Config;
-
+using MongoDB.Bson;
 using MongoDB.Driver;
 
 namespace Edgar.Database
@@ -12,17 +12,23 @@ namespace Edgar.Database
     {
         private static readonly ReplaceOptions UpsertOptions = new() { IsUpsert = true };
 
+        // IMPORTANT: only two collections total (prevents Cosmos throughput explosion)
+        private const string CompleteCollectionName = "complete";
+        private const string UncompleteCollectionName = "uncomplete";
+
         private readonly IMongoDatabase _completeDb;
         private readonly IMongoDatabase _uncompleteDb;
 
-        private readonly ConcurrentDictionary<string, IMongoCollection<DatabaseCompleteDocument>> _completeCollections = new();
-        private readonly ConcurrentDictionary<string, IMongoCollection<DatabaseUncompleteDocument>> _uncompleteCollections = new();
+        // Cache the two collections
+        private readonly ConcurrentDictionary<string, IMongoCollection<BsonDocument>> _collections = new();
 
         // Preferred ctor: pass options in (easy to test)
         public MongoDb(DatabaseOptions options)
         {
             ArgumentNullException.ThrowIfNull(options);
 
+            // NOTE: Make sure options.Host is a Mongo connection string for Cosmos Mongo API,
+            // e.g. "mongodb://..." or "mongodb+srv://..."
             var client = new MongoClient(options.Host);
 
             _completeDb = client.GetDatabase(options.EdgarDbName);
@@ -34,54 +40,71 @@ namespace Edgar.Database
         {
         }
 
-        private IMongoCollection<DatabaseCompleteDocument> GetCompleteCollection(string name) =>
-            _completeCollections.GetOrAdd(name, n => _completeDb.GetCollection<DatabaseCompleteDocument>(n));
-
-        private IMongoCollection<DatabaseUncompleteDocument> GetUncompleteCollection(string name) =>
-            _uncompleteCollections.GetOrAdd(name, n => _uncompleteDb.GetCollection<DatabaseUncompleteDocument>(n));
+        private IMongoCollection<BsonDocument> GetCollection(IMongoDatabase db, string collectionName)
+        {
+            // Cache per (dbName, collectionName)
+            var key = $"{db.DatabaseNamespace.DatabaseName}:{collectionName}";
+            return _collections.GetOrAdd(key, _ => db.GetCollection<BsonDocument>(collectionName));
+        }
 
         public Task UpsertCompleteAsync(
             DatabaseCompleteDocument doc,
-            string collection,
+            string collection, // <-- keep signature, but interpret as YearKey
             CancellationToken ct = default)
         {
             ArgumentNullException.ThrowIfNull(doc);
-            ValidateCollectionName(collection);
+            ValidateYearKey(collection);
 
-            var filter = Builders<DatabaseCompleteDocument>.Filter.And(
-                Builders<DatabaseCompleteDocument>.Filter.Eq(x => x.Cik, doc.Cik),
-                Builders<DatabaseCompleteDocument>.Filter.Eq(x => x.AccessionNumber, doc.AccessionNumber)
+            var yearKey = collection;
+
+            // Store yearKey inside the document without changing your model types
+            var bson = doc.ToBsonDocument();
+            bson["YearKey"] = yearKey;
+
+            var filter = Builders<BsonDocument>.Filter.And(
+                Builders<BsonDocument>.Filter.Eq("Cik", doc.Cik),
+                Builders<BsonDocument>.Filter.Eq("AccessionNumber", doc.AccessionNumber),
+                Builders<BsonDocument>.Filter.Eq("YearKey", yearKey)
             );
 
-            return GetCompleteCollection(collection)
-                .ReplaceOneAsync(filter, doc, UpsertOptions, ct);
+            return GetCollection(_completeDb, CompleteCollectionName)
+                .ReplaceOneAsync(filter, bson, UpsertOptions, ct);
         }
 
         public Task UpsertUncompleteAsync(
             DatabaseUncompleteDocument doc,
-            string collection,
+            string collection, // <-- keep signature, but interpret as YearKey
             CancellationToken ct = default)
         {
             ArgumentNullException.ThrowIfNull(doc);
-            ValidateCollectionName(collection);
+            ValidateYearKey(collection);
 
-            var filter = Builders<DatabaseUncompleteDocument>.Filter.And(
-                Builders<DatabaseUncompleteDocument>.Filter.Eq(x => x.Cik, doc.Cik),
-                Builders<DatabaseUncompleteDocument>.Filter.Eq(x => x.AccessionNumber, doc.AccessionNumber)
+            var yearKey = collection;
+
+            var bson = doc.ToBsonDocument();
+            bson["YearKey"] = yearKey;
+
+            var filter = Builders<BsonDocument>.Filter.And(
+                Builders<BsonDocument>.Filter.Eq("Cik", doc.Cik),
+                Builders<BsonDocument>.Filter.Eq("AccessionNumber", doc.AccessionNumber),
+                Builders<BsonDocument>.Filter.Eq("YearKey", yearKey)
             );
 
-            return GetUncompleteCollection(collection)
-                .ReplaceOneAsync(filter, doc, UpsertOptions, ct);
+            return GetCollection(_uncompleteDb, UncompleteCollectionName)
+                .ReplaceOneAsync(filter, bson, UpsertOptions, ct);
         }
 
-        private static void ValidateCollectionName(string collection)
+        private static void ValidateYearKey(string yearKey)
         {
-            if (string.IsNullOrWhiteSpace(collection))
-                throw new ArgumentException("Collection name is required.", nameof(collection));
+            if (string.IsNullOrWhiteSpace(yearKey))
+                throw new ArgumentException("Year key is required.", nameof(yearKey));
 
-            // Optional: basic hardening to avoid weird names
-            if (collection.Contains('\0'))
-                throw new ArgumentException("Invalid collection name.", nameof(collection));
+            // Optional: ensure it's a year like "2010"
+            if (yearKey.Length != 4 || !int.TryParse(yearKey, out _))
+                throw new ArgumentException("Year key must look like '2010'.", nameof(yearKey));
+
+            if (yearKey.Contains('\0'))
+                throw new ArgumentException("Invalid year key.", nameof(yearKey));
         }
     }
 }

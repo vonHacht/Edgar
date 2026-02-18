@@ -53,7 +53,9 @@ namespace Edgar.Edgar
             }
 
             // Typical research choice: one 10-K per CIK per year (keep the latest filing date in that year)
-            return PickOnePerCikPerYear(all);
+            // return PickOnePerCikPerYear(all);
+            // ... but if you want to keep all filings that are "far enough apart" (e.g. to keep some amendments but not near-duplicates), use this instead:
+            return PickAllRightful10Ks(all, minDaysBetweenFilings: 180);
         }
 
         public static string BuildMasterIndexUrl(int year, int quarter)
@@ -140,6 +142,74 @@ namespace Edgar.Edgar
                 .OrderBy(f => f.DateFiled)
                 .ToList();
         }
+
+        private static List<Filing> PickAllRightful10Ks(
+    List<Filing> filings,
+    int minDaysBetweenFilings = 180)
+        {
+            if (filings == null || filings.Count == 0)
+            {
+                return new List<Filing>();
+            }
+
+            return filings
+                // avoid exact duplicates (sometimes master.idx can repeat rows)
+                .GroupBy(f => (f.CIK, f.Filename), StringTupleComparer.Instance)
+                .Select(g => g.OrderByDescending(x => x.DateFiled).First())
+                .GroupBy(f => f.CIK)
+                .SelectMany(g =>
+                {
+                    var ordered = g.OrderBy(x => x.DateFiled).ToList();
+                    var kept = new List<Filing>(capacity: ordered.Count);
+
+                    Filing? lastKept = null;
+
+                    foreach (var f in ordered)
+                    {
+                        if (lastKept == null)
+                        {
+                            kept.Add(f);
+                            lastKept = f;
+                            continue;
+                        }
+
+                        var days = (f.DateFiled - lastKept.DateFiled).TotalDays;
+
+                        // keep only if it's far enough from the last kept filing
+                        if (days >= minDaysBetweenFilings)
+                        {
+                            kept.Add(f);
+                            lastKept = f;
+                        }
+                        else
+                        {
+                            // Too close: likely amendment/dup/near-duplicate.
+                            // If you want to prefer the *later* one within the cluster, swap logic here.
+                        }
+                    }
+
+                    return kept;
+                })
+                .OrderBy(f => f.DateFiled)
+                .ToList();
+        }
+
+        // Helper comparer so GroupBy on (string, string) uses OrdinalIgnoreCase for CIK/Filename if you want.
+        private sealed class StringTupleComparer : IEqualityComparer<(string CIK, string Filename)>
+        {
+            public static readonly StringTupleComparer Instance = new();
+
+            public bool Equals((string CIK, string Filename) x, (string CIK, string Filename) y)
+                => string.Equals(x.CIK, y.CIK, StringComparison.OrdinalIgnoreCase)
+                   && string.Equals(x.Filename, y.Filename, StringComparison.OrdinalIgnoreCase);
+
+            public int GetHashCode((string CIK, string Filename) obj)
+                => HashCode.Combine(
+                    StringComparer.OrdinalIgnoreCase.GetHashCode(obj.CIK ?? ""),
+                    StringComparer.OrdinalIgnoreCase.GetHashCode(obj.Filename ?? "")
+                );
+        }
+
     }
 }
 

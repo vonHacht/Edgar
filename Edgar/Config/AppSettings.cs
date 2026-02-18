@@ -32,6 +32,11 @@
         public bool ExtractItem7 { get; init; } = false;
         public bool OverwriteRawFiles { get; init; } = false;
 
+        public bool LogToConsole { get; set; } = true;
+        public bool LogToFile { get; set; } = true;
+        public string LogLevel { get; set; } = "Verbose"; // Verbose, Debug, Information...
+
+
         // ----------------------------
         // Quality thresholds
         // ----------------------------
@@ -84,7 +89,6 @@
             Directory.CreateDirectory(DictDir);
             Directory.CreateDirectory(OutputDir);
             Directory.CreateDirectory(CompaniesDir);
-            //Directory.CreateDirectory(MappingsDir);
         }
     }
 }

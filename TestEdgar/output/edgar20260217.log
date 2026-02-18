@@ -8091,3 +8091,237 @@ Header: traceparent Length: 55;
    at MongoDB.Driver.MongoCollectionBase`1.ReplaceOneAsync(FilterDefinition`1 filter, TDocument replacement, ReplaceOptions options, Func`3 bulkWriteAsync)
    at Edgar.Pipeline.PanelBuilder.ProcessFilingAsync(Filing filing, Int32 year, CancellationToken ct) in C:\git\Edgar\Edgar\Pipeline\PanelBuilder.cs:line 179
    at Edgar.Pipeline.PanelBuilder.RunAsync(CancellationToken ct) in C:\git\Edgar\Edgar\Pipeline\PanelBuilder.cs:line 71
+2026-02-17 19:59:26 [INF] Starting EDGAR risk pipeline...
+2026-02-17 20:00:59 [ERR] Error processing filing 0001385329
+MongoDB.Driver.MongoCommandException: Command update failed: Error=2, Details='Response status code does not indicate success: BadRequest (400); Substatus: 1028; ActivityId: c9b593f6-6627-4088-970d-2f22ee2ac69b; Reason: ({"code":"BadRequest","message":"Message: {\"Errors\":[\"Your account is currently configured with a total throughput limit of 1000 RU/s. This operation failed because it would have increased the total throughput to 1400 RU/s. See https://aka.ms/cosmos-tp-limit for more information.\"]}\r\nActivityId: c9b593f6-6627-4088-970d-2f22ee2ac69b, Request URI: /apps/26c4e3e3-b8f0-4b45-8d3c-c11a48dd4d62/services/cb138a4f-c9d5-4bb3-b109-eef6c774a00c/partitions/5977d7fc-2689-4e30-8eb0-87540669c1d6/replicas/134151090032503002p, RequestStats: , SDK: Microsoft.Azure.Documents.Common/2.14.0"}
+RequestUri: https://thesis-northeurope.documents.azure.com/dbs/edgarLogging/colls;
+RequestMethod: POST;
+Header: Authorization Length: 82;
+Header: x-ms-date Length: 29;
+Header: x-ms-cosmos-sdk-supportedcapabilities Length: 1;
+Header: x-ms-offer-throughput Length: 3;
+Header: x-ms-cosmos-insert-systempartitionkey Length: 4;
+Header: x-ms-activity-id Length: 36;
+Header: Cache-Control Length: 8;
+Header: User-Agent Length: 148;
+Header: x-ms-cosmos-apitype Length: 7;
+Header: x-ms-version Length: 10;
+Header: Accept Length: 16;
+Header: x-ms-cosmos-compute-hop-count Length: 1;
+Header: x-ms-gateway-use-mtls Length: 1;
+Header: traceparent Length: 55;
+, Request URI: /dbs/edgarLogging/colls, RequestStats: Microsoft.Azure.Cosmos.Tracing.TraceData.ClientSideRequestStatisticsTraceDatum, SDK: Windows/10.0.20348 cosmos-netstandard-sdk/3.18.0);.
+   at MongoDB.Driver.Core.Operations.RetryableWriteOperationExecutor.ExecuteAsync[TResult](OperationContext operationContext, IRetryableWriteOperation`1 operation, RetryableWriteContext context)
+   at MongoDB.Driver.Core.Operations.BulkUnmixedWriteOperationBase`1.ExecuteBatchAsync(OperationContext operationContext, RetryableWriteContext context, Batch batch)
+   at MongoDB.Driver.Core.Operations.BulkUnmixedWriteOperationBase`1.ExecuteBatchesAsync(OperationContext operationContext, RetryableWriteContext context)
+   at MongoDB.Driver.Core.Operations.BulkMixedWriteOperation.ExecuteBatchAsync(OperationContext operationContext, RetryableWriteContext context, Batch batch)
+   at MongoDB.Driver.Core.Operations.BulkMixedWriteOperation.ExecuteAsync(OperationContext operationContext, IWriteBinding binding)
+   at MongoDB.Driver.OperationExecutor.ExecuteWriteOperationAsync[TResult](OperationContext operationContext, IClientSessionHandle session, IWriteOperation`1 operation, Boolean allowChannelPinning)
+   at MongoDB.Driver.MongoCollectionImpl`1.ExecuteWriteOperationAsync[TResult](IClientSessionHandle session, IWriteOperation`1 operation, Nullable`1 timeout, CancellationToken cancellationToken)
+   at MongoDB.Driver.MongoCollectionImpl`1.BulkWriteAsync(IClientSessionHandle session, IEnumerable`1 requests, BulkWriteOptions options, CancellationToken cancellationToken)
+   at MongoDB.Driver.MongoCollectionImpl`1.BulkWriteAsync(IEnumerable`1 requests, BulkWriteOptions options, CancellationToken cancellationToken)
+   at MongoDB.Driver.MongoCollectionBase`1.ReplaceOneAsync(FilterDefinition`1 filter, TDocument replacement, ReplaceOptions options, Func`3 bulkWriteAsync)
+   at Edgar.Pipeline.PanelBuilder.ProcessFilingAsync(Filing filing, Int32 year, CancellationToken ct) in C:\git\Edgar\Edgar\Pipeline\PanelBuilder.cs:line 101
+   at Edgar.Pipeline.PanelBuilder.RunAsync(CancellationToken ct) in C:\git\Edgar\Edgar\Pipeline\PanelBuilder.cs:line 71
+2026-02-17 20:21:31 [INF] === Starting EDGAR risk pipeline ===
+2026-02-17 20:21:31 [INF] ----- YEAR 2010 -----
+2026-02-17 20:21:35 [INF] Found 8955 filings for 2010
+2026-02-17 20:21:35 [INF] [Year 2010 | Filing 1/8955 | CIK 0001385329] Starting
+2026-02-17 20:21:35 [INF] CIK 0001385329 | Downloading filing HTML (cached if available)
+2026-02-17 20:21:35 [INF] CIK 0001385329 | Reading HTML from C:\git\Edgar\Edgar\Data\raw\0001385329\000106299310000002\0001062993-10-000002.txt
+2026-02-17 20:21:35 [INF] CIK 0001385329 | Cleaning + extracting sections
+2026-02-17 20:21:35 [INF] CIK 0001385329 | Finding CCM match
+2026-02-17 20:22:22 [INF] CIK 0001385329 | No CCM match -> writing uncomplete doc (CcmFound=false)
+2026-02-17 20:22:23 [ERR] [Year 2010 | Filing 1/8955 | CIK 0001385329] ERROR
+MongoDB.Driver.MongoCommandException: Command update failed: Error=2, Details='Response status code does not indicate success: BadRequest (400); Substatus: 1028; ActivityId: 4c39682c-b2c6-4feb-9df9-81ea033c797b; Reason: ({"code":"BadRequest","message":"Message: {\"Errors\":[\"Your account is currently configured with a total throughput limit of 1000 RU/s. This operation failed because it would have increased the total throughput to 1400 RU/s. See https://aka.ms/cosmos-tp-limit for more information.\"]}\r\nActivityId: 4c39682c-b2c6-4feb-9df9-81ea033c797b, Request URI: /apps/26c4e3e3-b8f0-4b45-8d3c-c11a48dd4d62/services/cb138a4f-c9d5-4bb3-b109-eef6c774a00c/partitions/5977d7fc-2689-4e30-8eb0-87540669c1d6/replicas/134151090032503002p, RequestStats: , SDK: Microsoft.Azure.Documents.Common/2.14.0"}
+RequestUri: https://thesis-northeurope.documents.azure.com/dbs/edgarLogging/colls;
+RequestMethod: POST;
+Header: Authorization Length: 80;
+Header: x-ms-date Length: 29;
+Header: x-ms-cosmos-sdk-supportedcapabilities Length: 1;
+Header: x-ms-offer-throughput Length: 3;
+Header: x-ms-cosmos-insert-systempartitionkey Length: 4;
+Header: x-ms-activity-id Length: 36;
+Header: Cache-Control Length: 8;
+Header: User-Agent Length: 148;
+Header: x-ms-cosmos-apitype Length: 7;
+Header: x-ms-version Length: 10;
+Header: Accept Length: 16;
+Header: x-ms-cosmos-compute-hop-count Length: 1;
+Header: x-ms-gateway-use-mtls Length: 1;
+Header: traceparent Length: 55;
+, Request URI: /dbs/edgarLogging/colls, RequestStats: Microsoft.Azure.Cosmos.Tracing.TraceData.ClientSideRequestStatisticsTraceDatum, SDK: Windows/10.0.20348 cosmos-netstandard-sdk/3.18.0);.
+   at MongoDB.Driver.Core.Operations.RetryableWriteOperationExecutor.ExecuteAsync[TResult](OperationContext operationContext, IRetryableWriteOperation`1 operation, RetryableWriteContext context)
+   at MongoDB.Driver.Core.Operations.BulkUnmixedWriteOperationBase`1.ExecuteBatchAsync(OperationContext operationContext, RetryableWriteContext context, Batch batch)
+   at MongoDB.Driver.Core.Operations.BulkUnmixedWriteOperationBase`1.ExecuteBatchesAsync(OperationContext operationContext, RetryableWriteContext context)
+   at MongoDB.Driver.Core.Operations.BulkMixedWriteOperation.ExecuteBatchAsync(OperationContext operationContext, RetryableWriteContext context, Batch batch)
+   at MongoDB.Driver.Core.Operations.BulkMixedWriteOperation.ExecuteAsync(OperationContext operationContext, IWriteBinding binding)
+   at MongoDB.Driver.OperationExecutor.ExecuteWriteOperationAsync[TResult](OperationContext operationContext, IClientSessionHandle session, IWriteOperation`1 operation, Boolean allowChannelPinning)
+   at MongoDB.Driver.MongoCollectionImpl`1.ExecuteWriteOperationAsync[TResult](IClientSessionHandle session, IWriteOperation`1 operation, Nullable`1 timeout, CancellationToken cancellationToken)
+   at MongoDB.Driver.MongoCollectionImpl`1.BulkWriteAsync(IClientSessionHandle session, IEnumerable`1 requests, BulkWriteOptions options, CancellationToken cancellationToken)
+   at MongoDB.Driver.MongoCollectionImpl`1.BulkWriteAsync(IEnumerable`1 requests, BulkWriteOptions options, CancellationToken cancellationToken)
+   at MongoDB.Driver.MongoCollectionBase`1.ReplaceOneAsync(FilterDefinition`1 filter, TDocument replacement, ReplaceOptions options, Func`3 bulkWriteAsync)
+   at Edgar.Pipeline.PanelBuilder.ProcessFilingAsync(Filing filing, Int32 year, CancellationToken ct) in C:\git\Edgar\Edgar\Pipeline\PanelBuilder.cs:line 122
+   at Edgar.Pipeline.PanelBuilder.RunAsync(CancellationToken ct) in C:\git\Edgar\Edgar\Pipeline\PanelBuilder.cs:line 83
+2026-02-17 20:22:23 [INF] [Year 2010 | Filing 2/8955 | CIK 0001418196] Starting
+2026-02-17 20:22:23 [INF] CIK 0001418196 | Downloading filing HTML (cached if available)
+2026-02-17 20:22:23 [INF] CIK 0001418196 | Reading HTML from C:\git\Edgar\Edgar\Data\raw\0001418196\000143209310000006\0001432093-10-000006.txt
+2026-02-17 20:22:23 [INF] CIK 0001418196 | Cleaning + extracting sections
+2026-02-17 20:22:23 [INF] CIK 0001418196 | Finding CCM match
+2026-02-17 20:23:08 [INF] CIK 0001418196 | No CCM match -> writing uncomplete doc (CcmFound=false)
+2026-02-17 20:23:08 [ERR] [Year 2010 | Filing 2/8955 | CIK 0001418196] ERROR
+MongoDB.Driver.MongoCommandException: Command update failed: Error=2, Details='Response status code does not indicate success: BadRequest (400); Substatus: 1028; ActivityId: 8cbf957a-abea-4935-bb2d-048efc7a0cf4; Reason: ({"code":"BadRequest","message":"Message: {\"Errors\":[\"Your account is currently configured with a total throughput limit of 1000 RU/s. This operation failed because it would have increased the total throughput to 1400 RU/s. See https://aka.ms/cosmos-tp-limit for more information.\"]}\r\nActivityId: 8cbf957a-abea-4935-bb2d-048efc7a0cf4, Request URI: /apps/26c4e3e3-b8f0-4b45-8d3c-c11a48dd4d62/services/cb138a4f-c9d5-4bb3-b109-eef6c774a00c/partitions/5977d7fc-2689-4e30-8eb0-87540669c1d6/replicas/134151090032503002p, RequestStats: , SDK: Microsoft.Azure.Documents.Common/2.14.0"}
+RequestUri: https://thesis-northeurope.documents.azure.com/dbs/edgarLogging/colls;
+RequestMethod: POST;
+Header: Authorization Length: 84;
+Header: x-ms-date Length: 29;
+Header: x-ms-cosmos-sdk-supportedcapabilities Length: 1;
+Header: x-ms-offer-throughput Length: 3;
+Header: x-ms-cosmos-insert-systempartitionkey Length: 4;
+Header: x-ms-activity-id Length: 36;
+Header: Cache-Control Length: 8;
+Header: User-Agent Length: 148;
+Header: x-ms-cosmos-apitype Length: 7;
+Header: x-ms-version Length: 10;
+Header: Accept Length: 16;
+Header: x-ms-cosmos-compute-hop-count Length: 1;
+Header: x-ms-gateway-use-mtls Length: 1;
+Header: traceparent Length: 55;
+, Request URI: /dbs/edgarLogging/colls, RequestStats: Microsoft.Azure.Cosmos.Tracing.TraceData.ClientSideRequestStatisticsTraceDatum, SDK: Windows/10.0.20348 cosmos-netstandard-sdk/3.18.0);.
+   at MongoDB.Driver.Core.Operations.RetryableWriteOperationExecutor.ExecuteAsync[TResult](OperationContext operationContext, IRetryableWriteOperation`1 operation, RetryableWriteContext context)
+   at MongoDB.Driver.Core.Operations.BulkUnmixedWriteOperationBase`1.ExecuteBatchAsync(OperationContext operationContext, RetryableWriteContext context, Batch batch)
+   at MongoDB.Driver.Core.Operations.BulkUnmixedWriteOperationBase`1.ExecuteBatchesAsync(OperationContext operationContext, RetryableWriteContext context)
+   at MongoDB.Driver.Core.Operations.BulkMixedWriteOperation.ExecuteBatchAsync(OperationContext operationContext, RetryableWriteContext context, Batch batch)
+   at MongoDB.Driver.Core.Operations.BulkMixedWriteOperation.ExecuteAsync(OperationContext operationContext, IWriteBinding binding)
+   at MongoDB.Driver.OperationExecutor.ExecuteWriteOperationAsync[TResult](OperationContext operationContext, IClientSessionHandle session, IWriteOperation`1 operation, Boolean allowChannelPinning)
+   at MongoDB.Driver.MongoCollectionImpl`1.ExecuteWriteOperationAsync[TResult](IClientSessionHandle session, IWriteOperation`1 operation, Nullable`1 timeout, CancellationToken cancellationToken)
+   at MongoDB.Driver.MongoCollectionImpl`1.BulkWriteAsync(IClientSessionHandle session, IEnumerable`1 requests, BulkWriteOptions options, CancellationToken cancellationToken)
+   at MongoDB.Driver.MongoCollectionImpl`1.BulkWriteAsync(IEnumerable`1 requests, BulkWriteOptions options, CancellationToken cancellationToken)
+   at MongoDB.Driver.MongoCollectionBase`1.ReplaceOneAsync(FilterDefinition`1 filter, TDocument replacement, ReplaceOptions options, Func`3 bulkWriteAsync)
+   at Edgar.Pipeline.PanelBuilder.ProcessFilingAsync(Filing filing, Int32 year, CancellationToken ct) in C:\git\Edgar\Edgar\Pipeline\PanelBuilder.cs:line 122
+   at Edgar.Pipeline.PanelBuilder.RunAsync(CancellationToken ct) in C:\git\Edgar\Edgar\Pipeline\PanelBuilder.cs:line 83
+2026-02-17 20:23:08 [INF] [Year 2010 | Filing 3/8955 | CIK 0000779544] Starting
+2026-02-17 20:23:08 [INF] CIK 0000779544 | Downloading filing HTML (cached if available)
+2026-02-17 20:23:09 [INF] CIK 0000779544 | Reading HTML from C:\git\Edgar\Edgar\Data\raw\0000779544\000093041310000001\0000930413-10-000001.txt
+2026-02-17 20:23:09 [INF] CIK 0000779544 | Cleaning + extracting sections
+2026-02-17 20:23:09 [INF] CIK 0000779544 | Finding CCM match
+2026-02-17 20:31:17 [INF] === Starting EDGAR risk pipeline ===
+2026-02-17 20:31:17 [INF] ----- YEAR 2010 -----
+2026-02-17 20:31:21 [INF] Found 8955 filings for 2010
+2026-02-17 20:31:21 [INF] [Year 2010 | Filing 1/8955 | CIK 0001385329] Starting
+2026-02-17 20:31:21 [INF] CIK 0001385329 | Downloading filing HTML (cached if available)
+2026-02-17 20:31:21 [INF] CIK 0001385329 | Reading HTML from C:\git\Edgar\Edgar\Data\raw\0001385329\000106299310000002\0001062993-10-000002.txt
+2026-02-17 20:31:21 [INF] CIK 0001385329 | Cleaning + extracting sections
+2026-02-17 20:31:21 [INF] CIK 0001385329 | Finding CCM match
+2026-02-17 20:32:06 [INF] CIK 0001385329 | No CCM match -> writing uncomplete doc (CcmFound=false)
+2026-02-17 20:32:07 [ERR] [Year 2010 | Filing 1/8955 | CIK 0001385329] ERROR
+MongoDB.Driver.MongoCommandException: Command update failed: Error=2, Details='Response status code does not indicate success: BadRequest (400); Substatus: 1028; ActivityId: 342f6fb6-af68-4484-b2b3-655c195cc85f; Reason: ({"code":"BadRequest","message":"Message: {\"Errors\":[\"Your account is currently configured with a total throughput limit of 1000 RU/s. This operation failed because it would have increased the total throughput to 1400 RU/s. See https://aka.ms/cosmos-tp-limit for more information.\"]}\r\nActivityId: 342f6fb6-af68-4484-b2b3-655c195cc85f, Request URI: /apps/26c4e3e3-b8f0-4b45-8d3c-c11a48dd4d62/services/cb138a4f-c9d5-4bb3-b109-eef6c774a00c/partitions/5977d7fc-2689-4e30-8eb0-87540669c1d6/replicas/134151090032503002p, RequestStats: , SDK: Microsoft.Azure.Documents.Common/2.14.0"}
+RequestUri: https://thesis-northeurope.documents.azure.com/dbs/edgarLogging/colls;
+RequestMethod: POST;
+Header: Authorization Length: 82;
+Header: x-ms-date Length: 29;
+Header: x-ms-cosmos-sdk-supportedcapabilities Length: 1;
+Header: x-ms-offer-throughput Length: 3;
+Header: x-ms-cosmos-insert-systempartitionkey Length: 4;
+Header: x-ms-activity-id Length: 36;
+Header: Cache-Control Length: 8;
+Header: User-Agent Length: 148;
+Header: x-ms-cosmos-apitype Length: 7;
+Header: x-ms-version Length: 10;
+Header: Accept Length: 16;
+Header: x-ms-cosmos-compute-hop-count Length: 1;
+Header: x-ms-gateway-use-mtls Length: 1;
+Header: traceparent Length: 55;
+, Request URI: /dbs/edgarLogging/colls, RequestStats: Microsoft.Azure.Cosmos.Tracing.TraceData.ClientSideRequestStatisticsTraceDatum, SDK: Windows/10.0.20348 cosmos-netstandard-sdk/3.18.0);.
+   at MongoDB.Driver.Core.Operations.RetryableWriteOperationExecutor.ExecuteAsync[TResult](OperationContext operationContext, IRetryableWriteOperation`1 operation, RetryableWriteContext context)
+   at MongoDB.Driver.Core.Operations.BulkUnmixedWriteOperationBase`1.ExecuteBatchAsync(OperationContext operationContext, RetryableWriteContext context, Batch batch)
+   at MongoDB.Driver.Core.Operations.BulkUnmixedWriteOperationBase`1.ExecuteBatchesAsync(OperationContext operationContext, RetryableWriteContext context)
+   at MongoDB.Driver.Core.Operations.BulkMixedWriteOperation.ExecuteBatchAsync(OperationContext operationContext, RetryableWriteContext context, Batch batch)
+   at MongoDB.Driver.Core.Operations.BulkMixedWriteOperation.ExecuteAsync(OperationContext operationContext, IWriteBinding binding)
+   at MongoDB.Driver.OperationExecutor.ExecuteWriteOperationAsync[TResult](OperationContext operationContext, IClientSessionHandle session, IWriteOperation`1 operation, Boolean allowChannelPinning)
+   at MongoDB.Driver.MongoCollectionImpl`1.ExecuteWriteOperationAsync[TResult](IClientSessionHandle session, IWriteOperation`1 operation, Nullable`1 timeout, CancellationToken cancellationToken)
+   at MongoDB.Driver.MongoCollectionImpl`1.BulkWriteAsync(IClientSessionHandle session, IEnumerable`1 requests, BulkWriteOptions options, CancellationToken cancellationToken)
+   at MongoDB.Driver.MongoCollectionImpl`1.BulkWriteAsync(IEnumerable`1 requests, BulkWriteOptions options, CancellationToken cancellationToken)
+   at MongoDB.Driver.MongoCollectionBase`1.ReplaceOneAsync(FilterDefinition`1 filter, TDocument replacement, ReplaceOptions options, Func`3 bulkWriteAsync)
+   at Edgar.Pipeline.PanelBuilder.ProcessFilingAsync(Filing filing, Int32 year, CancellationToken ct) in C:\git\Edgar\Edgar\Pipeline\PanelBuilder.cs:line 122
+   at Edgar.Pipeline.PanelBuilder.RunAsync(CancellationToken ct) in C:\git\Edgar\Edgar\Pipeline\PanelBuilder.cs:line 83
+2026-02-17 20:32:07 [INF] [Year 2010 | Filing 2/8955 | CIK 0001418196] Starting
+2026-02-17 20:32:07 [INF] CIK 0001418196 | Downloading filing HTML (cached if available)
+2026-02-17 20:32:07 [INF] CIK 0001418196 | Reading HTML from C:\git\Edgar\Edgar\Data\raw\0001418196\000143209310000006\0001432093-10-000006.txt
+2026-02-17 20:32:07 [INF] CIK 0001418196 | Cleaning + extracting sections
+2026-02-17 20:32:07 [INF] CIK 0001418196 | Finding CCM match
+2026-02-17 20:32:51 [INF] CIK 0001418196 | No CCM match -> writing uncomplete doc (CcmFound=false)
+2026-02-17 20:32:51 [ERR] [Year 2010 | Filing 2/8955 | CIK 0001418196] ERROR
+MongoDB.Driver.MongoCommandException: Command update failed: Error=2, Details='Response status code does not indicate success: BadRequest (400); Substatus: 1028; ActivityId: 906869b3-2b3d-4285-b689-acbaef511cc6; Reason: ({"code":"BadRequest","message":"Message: {\"Errors\":[\"Your account is currently configured with a total throughput limit of 1000 RU/s. This operation failed because it would have increased the total throughput to 1400 RU/s. See https://aka.ms/cosmos-tp-limit for more information.\"]}\r\nActivityId: 906869b3-2b3d-4285-b689-acbaef511cc6, Request URI: /apps/26c4e3e3-b8f0-4b45-8d3c-c11a48dd4d62/services/cb138a4f-c9d5-4bb3-b109-eef6c774a00c/partitions/5977d7fc-2689-4e30-8eb0-87540669c1d6/replicas/134151090032503002p, RequestStats: , SDK: Microsoft.Azure.Documents.Common/2.14.0"}
+RequestUri: https://thesis-northeurope.documents.azure.com/dbs/edgarLogging/colls;
+RequestMethod: POST;
+Header: Authorization Length: 82;
+Header: x-ms-date Length: 29;
+Header: x-ms-cosmos-sdk-supportedcapabilities Length: 1;
+Header: x-ms-offer-throughput Length: 3;
+Header: x-ms-cosmos-insert-systempartitionkey Length: 4;
+Header: x-ms-activity-id Length: 36;
+Header: Cache-Control Length: 8;
+Header: User-Agent Length: 148;
+Header: x-ms-cosmos-apitype Length: 7;
+Header: x-ms-version Length: 10;
+Header: Accept Length: 16;
+Header: x-ms-cosmos-compute-hop-count Length: 1;
+Header: x-ms-gateway-use-mtls Length: 1;
+Header: traceparent Length: 55;
+, Request URI: /dbs/edgarLogging/colls, RequestStats: Microsoft.Azure.Cosmos.Tracing.TraceData.ClientSideRequestStatisticsTraceDatum, SDK: Windows/10.0.20348 cosmos-netstandard-sdk/3.18.0);.
+   at MongoDB.Driver.Core.Operations.RetryableWriteOperationExecutor.ExecuteAsync[TResult](OperationContext operationContext, IRetryableWriteOperation`1 operation, RetryableWriteContext context)
+   at MongoDB.Driver.Core.Operations.BulkUnmixedWriteOperationBase`1.ExecuteBatchAsync(OperationContext operationContext, RetryableWriteContext context, Batch batch)
+   at MongoDB.Driver.Core.Operations.BulkUnmixedWriteOperationBase`1.ExecuteBatchesAsync(OperationContext operationContext, RetryableWriteContext context)
+   at MongoDB.Driver.Core.Operations.BulkMixedWriteOperation.ExecuteBatchAsync(OperationContext operationContext, RetryableWriteContext context, Batch batch)
+   at MongoDB.Driver.Core.Operations.BulkMixedWriteOperation.ExecuteAsync(OperationContext operationContext, IWriteBinding binding)
+   at MongoDB.Driver.OperationExecutor.ExecuteWriteOperationAsync[TResult](OperationContext operationContext, IClientSessionHandle session, IWriteOperation`1 operation, Boolean allowChannelPinning)
+   at MongoDB.Driver.MongoCollectionImpl`1.ExecuteWriteOperationAsync[TResult](IClientSessionHandle session, IWriteOperation`1 operation, Nullable`1 timeout, CancellationToken cancellationToken)
+   at MongoDB.Driver.MongoCollectionImpl`1.BulkWriteAsync(IClientSessionHandle session, IEnumerable`1 requests, BulkWriteOptions options, CancellationToken cancellationToken)
+   at MongoDB.Driver.MongoCollectionImpl`1.BulkWriteAsync(IEnumerable`1 requests, BulkWriteOptions options, CancellationToken cancellationToken)
+   at MongoDB.Driver.MongoCollectionBase`1.ReplaceOneAsync(FilterDefinition`1 filter, TDocument replacement, ReplaceOptions options, Func`3 bulkWriteAsync)
+   at Edgar.Pipeline.PanelBuilder.ProcessFilingAsync(Filing filing, Int32 year, CancellationToken ct) in C:\git\Edgar\Edgar\Pipeline\PanelBuilder.cs:line 122
+   at Edgar.Pipeline.PanelBuilder.RunAsync(CancellationToken ct) in C:\git\Edgar\Edgar\Pipeline\PanelBuilder.cs:line 83
+2026-02-17 20:32:51 [INF] [Year 2010 | Filing 3/8955 | CIK 0000779544] Starting
+2026-02-17 20:32:51 [INF] CIK 0000779544 | Downloading filing HTML (cached if available)
+2026-02-17 20:32:51 [INF] CIK 0000779544 | Reading HTML from C:\git\Edgar\Edgar\Data\raw\0000779544\000093041310000001\0000930413-10-000001.txt
+2026-02-17 20:32:51 [INF] CIK 0000779544 | Cleaning + extracting sections
+2026-02-17 20:32:51 [INF] CIK 0000779544 | Finding CCM match
+2026-02-17 20:34:08 [INF] CIK 0000779544 | Finding CRSP trading days (permno=85586)
+2026-02-17 20:35:40 [INF] CIK 0000779544 | Writing complete document to MongoDB
+2026-02-17 20:35:41 [ERR] [Year 2010 | Filing 3/8955 | CIK 0000779544] ERROR
+MongoDB.Driver.MongoCommandException: Command update failed: Error=2, Details='Response status code does not indicate success: BadRequest (400); Substatus: 1028; ActivityId: 105621f0-97a2-473c-89c0-0c7ce336dc6a; Reason: ({"code":"BadRequest","message":"Message: {\"Errors\":[\"Your account is currently configured with a total throughput limit of 1000 RU/s. This operation failed because it would have increased the total throughput to 1400 RU/s. See https://aka.ms/cosmos-tp-limit for more information.\"]}\r\nActivityId: 105621f0-97a2-473c-89c0-0c7ce336dc6a, Request URI: /apps/26c4e3e3-b8f0-4b45-8d3c-c11a48dd4d62/services/cb138a4f-c9d5-4bb3-b109-eef6c774a00c/partitions/5977d7fc-2689-4e30-8eb0-87540669c1d6/replicas/134151090032503002p, RequestStats: , SDK: Microsoft.Azure.Documents.Common/2.14.0"}
+RequestUri: https://thesis-northeurope.documents.azure.com/dbs/edgar/colls;
+RequestMethod: POST;
+Header: Authorization Length: 80;
+Header: x-ms-date Length: 29;
+Header: x-ms-cosmos-sdk-supportedcapabilities Length: 1;
+Header: x-ms-offer-throughput Length: 3;
+Header: x-ms-cosmos-insert-systempartitionkey Length: 4;
+Header: x-ms-activity-id Length: 36;
+Header: Cache-Control Length: 8;
+Header: User-Agent Length: 148;
+Header: x-ms-cosmos-apitype Length: 7;
+Header: x-ms-version Length: 10;
+Header: Accept Length: 16;
+Header: x-ms-cosmos-compute-hop-count Length: 1;
+Header: x-ms-gateway-use-mtls Length: 1;
+Header: traceparent Length: 55;
+, Request URI: /dbs/edgar/colls, RequestStats: Microsoft.Azure.Cosmos.Tracing.TraceData.ClientSideRequestStatisticsTraceDatum, SDK: Windows/10.0.20348 cosmos-netstandard-sdk/3.18.0);.
+   at MongoDB.Driver.Core.Operations.RetryableWriteOperationExecutor.ExecuteAsync[TResult](OperationContext operationContext, IRetryableWriteOperation`1 operation, RetryableWriteContext context)
+   at MongoDB.Driver.Core.Operations.BulkUnmixedWriteOperationBase`1.ExecuteBatchAsync(OperationContext operationContext, RetryableWriteContext context, Batch batch)
+   at MongoDB.Driver.Core.Operations.BulkUnmixedWriteOperationBase`1.ExecuteBatchesAsync(OperationContext operationContext, RetryableWriteContext context)
+   at MongoDB.Driver.Core.Operations.BulkMixedWriteOperation.ExecuteBatchAsync(OperationContext operationContext, RetryableWriteContext context, Batch batch)
+   at MongoDB.Driver.Core.Operations.BulkMixedWriteOperation.ExecuteAsync(OperationContext operationContext, IWriteBinding binding)
+   at MongoDB.Driver.OperationExecutor.ExecuteWriteOperationAsync[TResult](OperationContext operationContext, IClientSessionHandle session, IWriteOperation`1 operation, Boolean allowChannelPinning)
+   at MongoDB.Driver.MongoCollectionImpl`1.ExecuteWriteOperationAsync[TResult](IClientSessionHandle session, IWriteOperation`1 operation, Nullable`1 timeout, CancellationToken cancellationToken)
+   at MongoDB.Driver.MongoCollectionImpl`1.BulkWriteAsync(IClientSessionHandle session, IEnumerable`1 requests, BulkWriteOptions options, CancellationToken cancellationToken)
+   at MongoDB.Driver.MongoCollectionImpl`1.BulkWriteAsync(IEnumerable`1 requests, BulkWriteOptions options, CancellationToken cancellationToken)
+   at MongoDB.Driver.MongoCollectionBase`1.ReplaceOneAsync(FilterDefinition`1 filter, TDocument replacement, ReplaceOptions options, Func`3 bulkWriteAsync)
+   at Edgar.Pipeline.PanelBuilder.ProcessFilingAsync(Filing filing, Int32 year, CancellationToken ct) in C:\git\Edgar\Edgar\Pipeline\PanelBuilder.cs:line 206
+   at Edgar.Pipeline.PanelBuilder.RunAsync(CancellationToken ct) in C:\git\Edgar\Edgar\Pipeline\PanelBuilder.cs:line 83
+2026-02-17 20:35:41 [INF] [Year 2010 | Filing 4/8955 | CIK 0001364326] Starting
+2026-02-17 20:35:41 [INF] CIK 0001364326 | Downloading filing HTML (cached if available)
+2026-02-17 20:35:42 [INF] CIK 0001364326 | Reading HTML from C:\git\Edgar\Edgar\Data\raw\0001364326\000106299310000014\0001062993-10-000014.txt
+2026-02-17 20:35:42 [INF] CIK 0001364326 | Cleaning + extracting sections
+2026-02-17 20:35:42 [INF] CIK 0001364326 | Finding CCM match

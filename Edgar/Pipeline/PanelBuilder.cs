@@ -1,4 +1,5 @@
-﻿using System.Globalization;
+﻿using System.Diagnostics;
+using System.Globalization;
 
 using Edgar.Companies;
 using Edgar.Config;
@@ -42,15 +43,18 @@ namespace Edgar.Pipeline
             _mongoDbEdgar = new MongoDb();
         }
 
+        private static string FilingTag(int year, int index, int total, Filing filing)
+            => $"[Year {year} | Filing {index}/{total} | CIK {filing.CIK}]";
+
         public async Task RunAsync(CancellationToken ct = default)
         {
-            _logger.LogInformation("Starting EDGAR risk pipeline...");
+            _logger.LogInformation("=== Starting EDGAR risk pipeline ===");
 
             var years = new[]
             {
-                2010, 2011, 2012, 2013, 2014,
+                2009, 2010, 2011, 2012, 2013, 2014,
                 2015, 2016, 2017, 2018, 2019,
-                2020, 2021, 2022, 2023
+                2020, 2021, 2022, 2023, 2024
             };
 
             var totalFilings = 0;
@@ -59,62 +63,100 @@ namespace Edgar.Pipeline
             {
                 ct.ThrowIfCancellationRequested();
 
+                _logger.LogInformation("----- YEAR {Year} -----", year);
+
                 var filings = await _indexService.Get10KFilingsForYearAsync(year);
                 totalFilings += filings.Count;
 
-                foreach (var filing in filings)
+                _logger.LogInformation("Found {Count} filings for {Year}", filings.Count, year);
+
+                for (int i = 0; i < filings.Count; i++)
                 {
                     ct.ThrowIfCancellationRequested();
 
+                    var filing = filings[i];
+                    var tag = FilingTag(year, i + 1, filings.Count, filing);
+
                     try
                     {
+                        _logger.LogInformation("{Tag} Starting", tag);
                         await ProcessFilingAsync(filing, year, ct);
+                        _logger.LogInformation("{Tag} Finished", tag);
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogError(ex, "Error processing filing {CIK}", filing.CIK);
+                        _logger.LogError(ex, "{Tag} ERROR", tag);
                     }
                 }
             }
 
-            _logger.LogInformation("Pipeline complete. Total filings found: {Count}", totalFilings);
+            _logger.LogInformation("=== Pipeline complete. Total filings found: {Count} ===", totalFilings);
         }
 
         private async Task ProcessFilingAsync(Filing filing, int year, CancellationToken ct)
         {
+            var sw = Stopwatch.StartNew();
             var yearKey = year.ToString(CultureInfo.InvariantCulture);
 
-            // 1) Download filing HTML (cached) + read
+            void Stage(string msg)
+                => _logger.LogInformation("CIK {CIK} | {Msg}", filing.CIK, msg);
+
+            Stage("Downloading filing HTML (cached if available)");
             var htmlPath = await _downloader.GetOrDownloadPrimaryDocAsync(filing);
+
+            Stage($"Reading HTML from {htmlPath}");
             var html = await File.ReadAllTextAsync(htmlPath, ct);
 
-            // 2) Clean + extract sections
+            Stage("Cleaning + extracting sections");
             var cleanedText = HtmlCleaner.HtmlToText(html);
-            var sections = _extractor.Extract(cleanedText, true);
 
-            // 3) Find CCM match(es)
-            var ccmMatches = _ccmImporter.ReadByCik(filing.CIK, yearKey);
-            var ccm = ccmMatches.FirstOrDefault();
-
-            if (ccm is null)
+            if (cleanedText.Count() <= 2000)
             {
                 await UpsertUncompleteAsync(
                     yearKey,
                     new DatabaseUncompleteDocument
                     {
                         Cik = filing.CIK,
-                        CcmFound = false,
-                        CrspFound = false,
+                        ReasonNotFound = "Cleaned text too short (" + cleanedText.Count() + " chars)",
                         AccessionNumber = Accession.GetAccessionFromFilename(filing.Filename),
+                        FormType = filing.FormType,
+                        DateFiled = filing.DateFiled
                     },
                     ct);
 
                 return;
             }
 
-            // permno should not silently become 0 (0 will cause wasted scans / wrong joins)
+
+            var sections = _extractor.Extract(cleanedText, true);
+
+            Stage("Finding CCM match");
+            var ccmMatches = _ccmImporter.ReadByCik(filing.CIK, yearKey);
+            var ccm = ccmMatches.FirstOrDefault();
+
+            if (ccm is null)
+            {
+                Stage("No CCM match -> writing uncomplete doc (CcmFound=false)");
+
+                await UpsertUncompleteAsync(
+                    yearKey,
+                    new DatabaseUncompleteDocument
+                    {
+                        Cik = filing.CIK,
+                        ReasonNotFound = "CCM match not found",
+                        AccessionNumber = Accession.GetAccessionFromFilename(filing.Filename),
+                        FormType = filing.FormType,
+                        DateFiled = filing.DateFiled
+                    },
+                    ct);
+
+                return;
+            }
+
             if (ccm.permno is null)
             {
+                Stage("CCM found but permno missing -> writing uncomplete doc (CrspFound=false)");
+
                 await UpsertUncompleteAsync(
                     yearKey,
                     new DatabaseUncompleteDocument
@@ -122,8 +164,7 @@ namespace Edgar.Pipeline
                         Cik = filing.CIK,
                         Name = ccm.CompanyName ?? string.Empty,
                         Ticker = ccm.Ticker,
-                        CcmFound = true,
-                        CrspFound = false,
+                        ReasonNotFound= "CCM match found but permno is null",
                         AccessionNumber = Accession.GetAccessionFromFilename(filing.Filename),
                         FormType = filing.FormType,
                         DateFiled = filing.DateFiled
@@ -135,11 +176,13 @@ namespace Edgar.Pipeline
 
             var permno = ccm.permno.Value;
 
-            // 4) Find CRSP trading days
+            Stage($"Finding CRSP trading days (permno={permno})");
             var tradingDays = _crspImporter.ReadByPermno(permno, yearKey);
 
             if (tradingDays.Count == 0)
             {
+                Stage("No CRSP trading days -> writing uncomplete doc (CrspFound=false)");
+
                 await UpsertUncompleteAsync(
                     yearKey,
                     new DatabaseUncompleteDocument
@@ -147,8 +190,7 @@ namespace Edgar.Pipeline
                         Cik = filing.CIK,
                         Name = ccm.CompanyName ?? string.Empty,
                         Ticker = ccm.Ticker,
-                        CcmFound = true,
-                        CrspFound = false,
+                        ReasonNotFound = "CRSP trading days not found for permno " + permno + " (ccm found)",
                         AccessionNumber = Accession.GetAccessionFromFilename(filing.Filename),
                         FormType = filing.FormType,
                         DateFiled = filing.DateFiled
@@ -158,7 +200,8 @@ namespace Edgar.Pipeline
                 return;
             }
 
-            // 5) Write complete document
+            Stage("Writing complete document to MongoDB");
+
             var doc = new DatabaseCompleteDocument
             {
                 Name = ccm.CompanyName ?? string.Empty,
@@ -178,14 +221,16 @@ namespace Edgar.Pipeline
 
             await _mongoDbEdgar.UpsertCompleteAsync(doc, yearKey);
 
-            Console.WriteLine("");
+            sw.Stop();
+            Stage($"Done in {sw.Elapsed.TotalSeconds:F1}s");
         }
 
         private Task UpsertUncompleteAsync(string yearKey, DatabaseUncompleteDocument doc, CancellationToken ct)
         {
-            // If your mDb methods accept CancellationToken, pass it through.
-            // Otherwise ct is just for future-proofing.
+            // If your MongoDb methods accept CancellationToken, pass it through.
+            // Otherwise ct is here for future-proofing.
             return _mongoDbEdgar.UpsertUncompleteAsync(doc, yearKey);
         }
     }
 }
+
