@@ -30,7 +30,7 @@ namespace Edgar.Companies
         {
             ArgumentNullException.ThrowIfNull(settings);
 
-            _crspPath = Path.Combine(settings.CompaniesDir, Filepaths.returnsCRSPFileName);
+            _crspPath = settings.CrspFilename;
 
             _csvConfig = new CsvConfiguration(CultureInfo.InvariantCulture)
             {

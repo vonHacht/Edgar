@@ -7,6 +7,9 @@
 
         public ExtractedSections Sections { get; set; } = new();
 
+        public decimal MarketValue { get; set; }
+
         public List<FirmTradingDay> TradingDays { get; set; } = new();
+
     }
 }

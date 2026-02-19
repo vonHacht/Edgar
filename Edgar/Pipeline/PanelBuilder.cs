@@ -50,7 +50,7 @@ namespace Edgar.Pipeline
             _crspImporter = new CrspImporter(_settings);
             _bookToMarketImporter = new BookToMarketImporter(_settings);
 
-            _mongoDbEdgar = new MongoDb();
+            _mongoDbEdgar = new MongoDb(_settings);
         }
 
         public async Task RunAsync(CancellationToken ct = default)
@@ -102,20 +102,26 @@ namespace Edgar.Pipeline
         {
             var sw = Stopwatch.StartNew();
             var yearKey = year.ToString(CultureInfo.InvariantCulture);
+            bool above2009below2024 = year > 2009 && year < 2024; 
 
             void Stage(string msg) => _logger.LogInformation("CIK {CIK} | {Msg}", filing.CIK, msg);
 
-            var bookToMarket = _bookToMarketImporter.ReadByCik(filing.CIK, filing.DateFiled);
-
-            if (Filter.Filter.BookValueAboveZero(bookToMarket))
+            if (above2009below2024)
             {
-                Stage("Book value below 0 or negative -> writing uncomplete doc");
-                await WriteUncompleteAsync(
-                    yearKey,
-                    filing,
-                    reason: $"Book value is {Filter.Filter.BookValue(bookToMarket):F2} (below 0 or negative)",
-                    ct: ct);
-                return;
+
+                var bookToMarket = _bookToMarketImporter.ReadByCik(filing.CIK, filing.DateFiled);
+
+                if (Filter.Filter.BookValueAboveZero(bookToMarket))
+                {
+                    Stage("Book value below 0 or negative -> writing uncomplete doc");
+                    await WriteUncompleteAsync(
+                        yearKey,
+                        filing,
+                        reason: $"Book value is {Filter.Filter.BookValue(bookToMarket):F2} (below 0 or negative)",
+                        ct: ct);
+                    return;
+                }
+
             }
 
             Stage("Downloading filing HTML (cached if available)");
@@ -129,15 +135,19 @@ namespace Edgar.Pipeline
             Stage("Cleaning + extracting sections");
             var cleanedText = HtmlCleaner.HtmlToText(html);
 
-            if (cleanedText.Length <= MinCleanTextChars)
+            if (above2009below2024) 
             {
-                await WriteUncompleteAsync(
-                    yearKey,
-                    filing,
-                    reason: $"Cleaned text too short ({cleanedText.Length} chars)",
-                    ct: ct);
+                if (cleanedText.Length <= MinCleanTextChars)
+                {
+                    await WriteUncompleteAsync(
+                        yearKey,
+                        filing,
+                        reason: $"Cleaned text too short ({cleanedText.Length} chars)",
+                        ct: ct);
 
-                return;
+                    return;
+                }
+
             }
 
             var sections = _extractor.Extract(cleanedText, true);
@@ -199,8 +209,6 @@ namespace Edgar.Pipeline
                 return;
             }
 
-
-
             Stage("Writing complete document to MongoDB");
 
             var doc = new DatabaseCompleteDocument
@@ -217,7 +225,9 @@ namespace Edgar.Pipeline
                 DateFiled = filing.DateFiled,
 
                 Sections = sections,
-                TradingDays = tradingDays
+                TradingDays = tradingDays,
+
+                MarketValue = tradingDays[tradingDays.Count-1].Close * tradingDays[tradingDays.Count-1].SharesOut ?? 0
             };
 
             await _mongoDbEdgar.UpsertCompleteAsync(doc, yearKey);

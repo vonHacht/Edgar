@@ -14,28 +14,19 @@ namespace Edgar.Database
 
         private readonly IMongoDatabase _completeDb;
         private readonly IMongoDatabase _uncompleteDb;
-        private readonly IMongoDatabase _bookToMarketDb;
 
         // Cache the two collections
         private readonly ConcurrentDictionary<string, IMongoCollection<BsonDocument>> _collections = new();
 
         // Preferred ctor: pass options in (easy to test)
-        public MongoDb(DatabaseOptions options)
+        public MongoDb(AppSettings options)
         {
             ArgumentNullException.ThrowIfNull(options);
 
-            // NOTE: Make sure options.Host is a Mongo connection string for Cosmos Mongo API,
-            // e.g. "mongodb://..." or "mongodb+srv://..."
-            var client = new MongoClient(options.Host);
+            var client = new MongoClient(options.DefaultLocalHost);
 
-            _completeDb = client.GetDatabase(options.EdgarDbName);
-            _uncompleteDb = client.GetDatabase(options.EdgarLoggingDbName);
-            _bookToMarketDb = client.GetDatabase(options.EdgarMarketEquityDbName);
-        }
-
-        // Convenience ctor: reads env (DB_HOST/DB_NAME/DB_LOGGING_NAME)
-        public MongoDb() : this(DatabaseOptions.FromEnvironment())
-        {
+            _completeDb = client.GetDatabase(options.DefaultEdgarDbName);
+            _uncompleteDb = client.GetDatabase(options.DefaultEdgarLoggingDbName);
         }
 
         private IMongoCollection<BsonDocument> GetCollection(IMongoDatabase db, string collectionName)
@@ -43,28 +34,6 @@ namespace Edgar.Database
             // Cache per (dbName, collectionName)
             var key = $"{db.DatabaseNamespace.DatabaseName}:{collectionName}";
             return _collections.GetOrAdd(key, _ => db.GetCollection<BsonDocument>(collectionName));
-        }
-
-        public Task UpsertMarketValueAsync(
-            DatabaseMarketValueDocument doc,
-            string collection, // <-- keep signature, but interpret as YearKey
-            CancellationToken ct = default)
-        {
-            ArgumentNullException.ThrowIfNull(doc);
-            ValidateYearKey(collection);
-
-            var yearKey = collection;
-
-            // Store yearKey inside the document without changing your model types
-            var bson = doc.ToBsonDocument();
-            bson["YearKey"] = yearKey;
-
-            var filter = Builders<BsonDocument>.Filter.And(
-                Builders<BsonDocument>.Filter.Eq("Permno", doc.Permno)
-            );
-
-            return GetCollection(_bookToMarketDb, yearKey)
-                .ReplaceOneAsync(filter, bson, UpsertOptions, ct);
         }
 
         public Task UpsertCompleteAsync(

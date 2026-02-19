@@ -30,3 +30,101 @@
 2026-02-19 15:35:14 [VRB] Processing PERMNO 10092 for 2009
 2026-02-19 15:36:08 [VRB] PERMNO 10092 2009: prc=1.59, shares=13352, MV=21229.68
 2026-02-19 15:36:08 [VRB] Processing PERMNO 10100 for 2009
+2026-02-19 20:43:13 [INF] === Starting EDGAR risk pipeline ===
+2026-02-19 20:43:13 [INF] ----- YEAR 2009 -----
+2026-02-19 20:43:18 [INF] Found 9706 filings for 2009
+2026-02-19 20:43:18 [INF] [Year 2009 | Filing 1/9706 | CIK 0001415813] Starting
+2026-02-19 20:48:10 [INF] === Starting EDGAR risk pipeline ===
+2026-02-19 20:48:10 [INF] ----- YEAR 2009 -----
+2026-02-19 20:48:16 [INF] Found 9706 filings for 2009
+2026-02-19 20:48:16 [INF] [Year 2009 | Filing 1/9706 | CIK 0001415813] Starting
+2026-02-19 20:48:16 [INF] CIK 0001415813 | Downloading filing HTML (cached if available)
+2026-02-19 20:48:16 [INF] CIK 0001415813 | Reading HTML from C:\git\Edgar\Edgar\Data\raw\0001415813\000141581209000001\0001415812-09-000001.txt
+2026-02-19 20:48:16 [INF] CIK 0001415813 | Cleaning + extracting sections
+2026-02-19 20:48:16 [INF] CIK 0001415813 | Finding CCM match
+2026-02-19 20:49:08 [INF] CIK 0001415813 | No CCM match -> writing uncomplete doc
+2026-02-19 20:49:08 [INF] [Year 2009 | Filing 1/9706 | CIK 0001415813] Finished
+2026-02-19 20:49:08 [INF] [Year 2009 | Filing 2/9706 | CIK 0000788329] Starting
+2026-02-19 20:49:08 [INF] CIK 0000788329 | Downloading filing HTML (cached if available)
+2026-02-19 20:49:08 [INF] CIK 0000788329 | Reading HTML from C:\git\Edgar\Edgar\Data\raw\0000788329\000104216709000004\0001042167-09-000004.txt
+2026-02-19 20:49:08 [INF] CIK 0000788329 | Cleaning + extracting sections
+2026-02-19 20:49:08 [INF] CIK 0000788329 | Finding CCM match
+2026-02-19 20:50:03 [INF] CIK 0000788329 | No CCM match -> writing uncomplete doc
+2026-02-19 20:50:03 [INF] [Year 2009 | Filing 2/9706 | CIK 0000788329] Finished
+2026-02-19 20:50:03 [INF] [Year 2009 | Filing 3/9706 | CIK 0001356371] Starting
+2026-02-19 20:50:03 [INF] CIK 0001356371 | Downloading filing HTML (cached if available)
+2026-02-19 20:50:03 [INF] CIK 0001356371 | Reading HTML from C:\git\Edgar\Edgar\Data\raw\0001356371\000117625609000004\0001176256-09-000004.txt
+2026-02-19 20:50:03 [INF] CIK 0001356371 | Cleaning + extracting sections
+2026-02-19 20:50:03 [INF] CIK 0001356371 | Finding CCM match
+2026-02-19 20:50:43 [INF] CIK 0001356371 | No CCM match -> writing uncomplete doc
+2026-02-19 20:50:43 [INF] [Year 2009 | Filing 3/9706 | CIK 0001356371] Finished
+2026-02-19 20:50:43 [INF] [Year 2009 | Filing 4/9706 | CIK 0001412659] Starting
+2026-02-19 20:50:43 [INF] CIK 0001412659 | Downloading filing HTML (cached if available)
+2026-02-19 20:50:43 [INF] CIK 0001412659 | Reading HTML from C:\git\Edgar\Edgar\Data\raw\0001412659\000125529409000002\0001255294-09-000002.txt
+2026-02-19 20:50:43 [INF] CIK 0001412659 | Cleaning + extracting sections
+2026-02-19 20:50:43 [INF] CIK 0001412659 | Finding CCM match
+2026-02-19 20:52:06 [INF] CIK 0001412659 | No CCM match -> writing uncomplete doc
+2026-02-19 20:52:06 [INF] [Year 2009 | Filing 4/9706 | CIK 0001412659] Finished
+2026-02-19 20:52:06 [INF] [Year 2009 | Filing 5/9706 | CIK 0000780127] Starting
+2026-02-19 20:52:06 [INF] CIK 0000780127 | Downloading filing HTML (cached if available)
+2026-02-19 20:52:06 [INF] CIK 0000780127 | Reading HTML from C:\git\Edgar\Edgar\Data\raw\0000780127\000095013709000095\0000950137-09-000095.txt
+2026-02-19 20:52:06 [INF] CIK 0000780127 | Cleaning + extracting sections
+2026-02-19 20:52:06 [INF] CIK 0000780127 | Finding CCM match
+2026-02-19 20:53:55 [INF] CIK 0000780127 | No CCM match -> writing uncomplete doc
+2026-02-19 20:53:55 [INF] [Year 2009 | Filing 5/9706 | CIK 0000780127] Finished
+2026-02-19 20:53:55 [INF] [Year 2009 | Filing 6/9706 | CIK 0000860543] Starting
+2026-02-19 20:53:55 [INF] CIK 0000860543 | Downloading filing HTML (cached if available)
+2026-02-19 20:53:55 [INF] CIK 0000860543 | Reading HTML from C:\git\Edgar\Edgar\Data\raw\0000860543\000121390009000016\0001213900-09-000016.txt
+2026-02-19 20:53:55 [INF] CIK 0000860543 | Cleaning + extracting sections
+2026-02-19 20:53:55 [INF] CIK 0000860543 | Finding CCM match
+2026-02-19 20:55:58 [INF] CIK 0000860543 | No CCM match -> writing uncomplete doc
+2026-02-19 20:55:58 [INF] [Year 2009 | Filing 6/9706 | CIK 0000860543] Finished
+2026-02-19 20:55:58 [INF] [Year 2009 | Filing 7/9706 | CIK 0000861370] Starting
+2026-02-19 20:55:58 [INF] CIK 0000861370 | Downloading filing HTML (cached if available)
+2026-02-19 20:55:58 [INF] CIK 0000861370 | Reading HTML from C:\git\Edgar\Edgar\Data\raw\0000861370\000101054909000006\0001010549-09-000006.txt
+2026-02-19 20:55:58 [INF] CIK 0000861370 | Cleaning + extracting sections
+2026-02-19 20:55:58 [INF] CIK 0000861370 | Finding CCM match
+2026-02-19 20:57:44 [INF] CIK 0000861370 | No CCM match -> writing uncomplete doc
+2026-02-19 20:57:44 [INF] [Year 2009 | Filing 7/9706 | CIK 0000861370] Finished
+2026-02-19 20:57:44 [INF] [Year 2009 | Filing 8/9706 | CIK 0001191359] Starting
+2026-02-19 20:57:44 [INF] CIK 0001191359 | Downloading filing HTML (cached if available)
+2026-02-19 20:57:44 [INF] CIK 0001191359 | Reading HTML from C:\git\Edgar\Edgar\Data\raw\0001191359\000106299309000035\0001062993-09-000035.txt
+2026-02-19 20:57:44 [INF] CIK 0001191359 | Cleaning + extracting sections
+2026-02-19 20:57:44 [INF] CIK 0001191359 | Finding CCM match
+2026-02-19 20:58:32 [INF] CIK 0001191359 | No CCM match -> writing uncomplete doc
+2026-02-19 20:58:32 [INF] [Year 2009 | Filing 8/9706 | CIK 0001191359] Finished
+2026-02-19 20:58:32 [INF] [Year 2009 | Filing 9/9706 | CIK 0001371247] Starting
+2026-02-19 20:58:32 [INF] CIK 0001371247 | Downloading filing HTML (cached if available)
+2026-02-19 20:58:32 [INF] CIK 0001371247 | Reading HTML from C:\git\Edgar\Edgar\Data\raw\0001371247\000137124709000002\0001371247-09-000002.txt
+2026-02-19 20:58:32 [INF] CIK 0001371247 | Cleaning + extracting sections
+2026-02-19 20:58:32 [INF] CIK 0001371247 | Finding CCM match
+2026-02-19 21:00:32 [INF] CIK 0001371247 | No CCM match -> writing uncomplete doc
+2026-02-19 21:00:32 [INF] [Year 2009 | Filing 9/9706 | CIK 0001371247] Finished
+2026-02-19 21:00:32 [INF] [Year 2009 | Filing 10/9706 | CIK 0001371487] Starting
+2026-02-19 21:00:32 [INF] CIK 0001371487 | Downloading filing HTML (cached if available)
+2026-02-19 21:00:32 [INF] CIK 0001371487 | Reading HTML from C:\git\Edgar\Edgar\Data\raw\0001371487\000137148709000002\0001371487-09-000002.txt
+2026-02-19 21:00:33 [INF] CIK 0001371487 | Cleaning + extracting sections
+2026-02-19 21:00:33 [INF] CIK 0001371487 | Finding CCM match
+2026-02-19 21:02:18 [INF] CIK 0001371487 | No CCM match -> writing uncomplete doc
+2026-02-19 21:02:18 [INF] [Year 2009 | Filing 10/9706 | CIK 0001371487] Finished
+2026-02-19 21:02:18 [INF] [Year 2009 | Filing 11/9706 | CIK 0001121812] Starting
+2026-02-19 21:02:18 [INF] CIK 0001121812 | Downloading filing HTML (cached if available)
+2026-02-19 21:02:18 [INF] CIK 0001121812 | Reading HTML from C:\git\Edgar\Edgar\Data\raw\0001121812\000094344009000013\0000943440-09-000013.txt
+2026-02-19 21:02:18 [INF] CIK 0001121812 | Cleaning + extracting sections
+2026-02-19 21:02:18 [INF] CIK 0001121812 | Finding CCM match
+2026-02-19 21:27:00 [INF] === Starting EDGAR risk pipeline ===
+2026-02-19 21:27:01 [INF] ----- YEAR 2009 -----
+2026-02-19 21:27:07 [INF] Found 9706 filings for 2009
+2026-02-19 21:27:07 [INF] [Year 2009 | Filing 1/9706 | CIK 0001415813] Starting
+2026-02-19 21:27:07 [INF] CIK 0001415813 | Downloading filing HTML (cached if available)
+2026-02-19 21:27:07 [INF] CIK 0001415813 | Reading HTML from C:\git\Edgar\Edgar\Data\raw\0001415813\000141581209000001\0001415812-09-000001.txt
+2026-02-19 21:27:07 [INF] CIK 0001415813 | Cleaning + extracting sections
+2026-02-19 21:27:07 [INF] CIK 0001415813 | Finding CCM match
+2026-02-19 21:27:50 [DBG] CCM cached lookup: CIK=0001415813, Year=2009, Rows=0
+2026-02-19 21:27:50 [INF] CIK 0001415813 | No CCM match -> writing uncomplete doc
+2026-02-19 21:27:51 [INF] [Year 2009 | Filing 1/9706 | CIK 0001415813] Finished
+2026-02-19 21:27:51 [INF] [Year 2009 | Filing 2/9706 | CIK 0000788329] Starting
+2026-02-19 21:27:51 [INF] CIK 0000788329 | Downloading filing HTML (cached if available)
+2026-02-19 21:27:51 [INF] CIK 0000788329 | Reading HTML from C:\git\Edgar\Edgar\Data\raw\0000788329\000104216709000004\0001042167-09-000004.txt
+2026-02-19 21:27:51 [INF] CIK 0000788329 | Cleaning + extracting sections
+2026-02-19 21:27:51 [INF] CIK 0000788329 | Finding CCM match

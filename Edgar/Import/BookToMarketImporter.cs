@@ -23,7 +23,7 @@ namespace Edgar.Import
         {
             ArgumentNullException.ThrowIfNull(settings);
 
-            _bookToMarketPath = Path.Combine(settings.CompaniesDir, Filepaths.bookToMarketFilename);
+            _bookToMarketPath = settings.BookToMarketFilename;
 
             _csvConfig = new CsvConfiguration(CultureInfo.InvariantCulture)
             {
@@ -42,9 +42,6 @@ namespace Edgar.Import
         {
             if (string.IsNullOrWhiteSpace(cik))
                 return null;
-
-            if (!File.Exists(_bookToMarketPath))
-                throw new FileNotFoundException($"BookToMarket path not found: {_bookToMarketPath}");
 
             var targetCik = cik.Trim();
             var targetDate = datadate.Date;

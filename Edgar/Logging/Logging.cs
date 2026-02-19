@@ -51,7 +51,7 @@ namespace Edgar.Logging
                 if (_settings.LogToFile)
                 {
                     config = config.WriteTo.File(
-                        Path.Combine(_settings.OutputDir, Config.Filepaths.logging),
+                        _settings.LogFilename,
                         rollingInterval: RollingInterval.Day,
                         retainedFileCountLimit: 7,
                         outputTemplate:
