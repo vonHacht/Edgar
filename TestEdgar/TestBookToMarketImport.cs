@@ -1,9 +1,9 @@
-﻿using Edgar.Companies;
-using Edgar.Config;
+﻿using Edgar.Config;
+using Edgar.Import;
 
 namespace TestEdgar
 {
-    public class TestCrspImporter
+    public class TestBookToMarketImport
     {
         private readonly string _edgarRoot = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "Edgar");
 
@@ -12,11 +12,13 @@ namespace TestEdgar
         {
             AppSettings settings = AppSettings.Load(_edgarRoot);
 
-            CrspImporter importer = new CrspImporter(settings);
+            BookToMarketImporter importer = new BookToMarketImporter(settings);
 
-            int permno = 84210;
+            string cik = "0000001750";
 
-            var result = importer.ReadByPermno(permno, "2020");
+            DateTime date = new DateTime(2021, 05, 31);
+
+            var result = importer.ReadByCik(cik, date);
 
             Console.WriteLine(result);
         }

@@ -12,12 +12,9 @@ namespace Edgar.Database
     {
         private static readonly ReplaceOptions UpsertOptions = new() { IsUpsert = true };
 
-        // IMPORTANT: only two collections total (prevents Cosmos throughput explosion)
-        private const string CompleteCollectionName = "complete";
-        private const string UncompleteCollectionName = "uncomplete";
-
         private readonly IMongoDatabase _completeDb;
         private readonly IMongoDatabase _uncompleteDb;
+        private readonly IMongoDatabase _bookToMarketDb;
 
         // Cache the two collections
         private readonly ConcurrentDictionary<string, IMongoCollection<BsonDocument>> _collections = new();
@@ -33,6 +30,7 @@ namespace Edgar.Database
 
             _completeDb = client.GetDatabase(options.EdgarDbName);
             _uncompleteDb = client.GetDatabase(options.EdgarLoggingDbName);
+            _bookToMarketDb = client.GetDatabase(options.EdgarMarketEquityDbName);
         }
 
         // Convenience ctor: reads env (DB_HOST/DB_NAME/DB_LOGGING_NAME)
@@ -45,6 +43,28 @@ namespace Edgar.Database
             // Cache per (dbName, collectionName)
             var key = $"{db.DatabaseNamespace.DatabaseName}:{collectionName}";
             return _collections.GetOrAdd(key, _ => db.GetCollection<BsonDocument>(collectionName));
+        }
+
+        public Task UpsertMarketValueAsync(
+            DatabaseMarketValueDocument doc,
+            string collection, // <-- keep signature, but interpret as YearKey
+            CancellationToken ct = default)
+        {
+            ArgumentNullException.ThrowIfNull(doc);
+            ValidateYearKey(collection);
+
+            var yearKey = collection;
+
+            // Store yearKey inside the document without changing your model types
+            var bson = doc.ToBsonDocument();
+            bson["YearKey"] = yearKey;
+
+            var filter = Builders<BsonDocument>.Filter.And(
+                Builders<BsonDocument>.Filter.Eq("Permno", doc.Permno)
+            );
+
+            return GetCollection(_bookToMarketDb, yearKey)
+                .ReplaceOneAsync(filter, bson, UpsertOptions, ct);
         }
 
         public Task UpsertCompleteAsync(
@@ -67,7 +87,7 @@ namespace Edgar.Database
                 Builders<BsonDocument>.Filter.Eq("YearKey", yearKey)
             );
 
-            return GetCollection(_completeDb, CompleteCollectionName)
+            return GetCollection(_completeDb, yearKey)
                 .ReplaceOneAsync(filter, bson, UpsertOptions, ct);
         }
 
@@ -90,7 +110,7 @@ namespace Edgar.Database
                 Builders<BsonDocument>.Filter.Eq("YearKey", yearKey)
             );
 
-            return GetCollection(_uncompleteDb, UncompleteCollectionName)
+            return GetCollection(_uncompleteDb, yearKey)
                 .ReplaceOneAsync(filter, bson, UpsertOptions, ct);
         }
 

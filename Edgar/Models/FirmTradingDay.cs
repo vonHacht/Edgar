@@ -3,7 +3,7 @@
     public sealed class FirmTradingDay
     {
         // Keys
-        public DateOnly Date { get; init; }
+        public DateTime Date { get; init; }
 
         // Prices (CRSP: PRC can be negative = midpoint; store raw + normalized)
         public decimal? ClosePrcRaw { get; init; }     // CRSP PRC as-is

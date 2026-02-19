@@ -5,10 +5,13 @@
         public const string DefaultLocalHost = "mongodb://localhost:27017";
         public const string DefaultEdgarDbName = "edgar";
         public const string DefaultEdgarLoggingDbName = "edgarLogging";
+        public const string DefaultEdgarMarketEquityDbName = "edgarMarketEquity";
 
         public string Host { get; }
         public string EdgarDbName { get; }
         public string EdgarLoggingDbName { get; }
+
+        public string EdgarMarketEquityDbName => DefaultEdgarMarketEquityDbName;
 
         public DatabaseOptions(
             string? host = null,

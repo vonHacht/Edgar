@@ -16,7 +16,7 @@ namespace TestEdgar
         public TestPanelBuilder()
         {
             _edgarRoot = Path.Combine(_repoRoot, "Edgar", "Edgar");
-            _envPath = Path.Combine(_repoRoot, "Edgar", "Edgar", ".env"); 
+            _envPath = Path.Combine(_repoRoot, "Edgar", "Edgar", ".env");
         }
 
         [Fact]

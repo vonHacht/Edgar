@@ -4,9 +4,14 @@ class Program
 {
     static async Task Main(string[] args)
     {
-        DotNetEnv.Env.Load();
+        /* var envPath = args.Length > 0 ? args[0] : ".env";
 
-        var pipeline = new PanelBuilder();
-        await pipeline.RunAsync();
+        DotNetEnv.Env.Load(envPath); */
+
+        //var pipeline = new PanelBuilder();
+        //await pipeline.RunAsync();
+
+        var marketEquityPipeline = new MarketEquityBuilder();
+        await marketEquityPipeline.RunAsync();
     }
 }

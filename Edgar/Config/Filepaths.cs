@@ -18,11 +18,11 @@
 
 
         // ---------------------------- Input filenames
-        public static readonly string samplesFileName = "samples_2010_2023.csv";
+        public static readonly string bookToMarketFilename = "booktomarket.csv";
 
-        public static readonly string returnsCCMFileName = "returns_ccm_2010_2023.csv";
+        public static readonly string returnsCCMFileName = "ccm.csv";
 
-        public static readonly string returnsCRSPFileName = "returns_crsp_2010_2023.csv";
+        public static readonly string returnsCRSPFileName = "crsp.csv";
 
     }
 }

@@ -1,5 +1,4 @@
 ﻿using Edgar.Config;
-using Edgar.Companies;
 using Edgar.Import;
 
 namespace TestEdgar

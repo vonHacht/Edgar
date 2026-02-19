@@ -12,13 +12,6 @@
         public string DictDir { get; init; }
         public string OutputDir { get; init; }
         public string CompaniesDir { get; init; }
-        public string MappingsDir { get; init; }
-
-        // ----------------------------
-        // Sample period
-        // ----------------------------
-        public int StartYear { get; init; } = 2010;
-        public int EndYear { get; init; } = 2023;
 
         // ----------------------------
         // SEC / EDGAR settings
@@ -35,12 +28,6 @@
         public bool LogToConsole { get; set; } = true;
         public bool LogToFile { get; set; } = true;
         public string LogLevel { get; set; } = "Verbose"; // Verbose, Debug, Information...
-
-
-        // ----------------------------
-        // Quality thresholds
-        // ----------------------------
-        public int MinItem1AWordCount { get; init; } = 200;
 
         // ✅ Production-friendly entry point
         public static AppSettings Load()
@@ -64,7 +51,6 @@
                 DictDir = Path.Combine(dataDir, "dictionaries"),
                 OutputDir = Path.Combine(projectRoot, "output"),
                 CompaniesDir = Path.Combine(dataDir, "companies"),
-                //MappingsDir = Path.Combine(dataDir, "mappings"),
 
                 UserAgent = "Edgar/1.0 (contact: your.email@university.edu)"
             };
@@ -75,10 +61,15 @@
 
         private static string ResolveProjectRootFromBaseDirectory()
         {
+#if DEBUG
             // bin/Debug/netX.Y → project root
             return Path.GetFullPath(
                 Path.Combine(AppContext.BaseDirectory, "..", "..", "..")
             );
+#else
+            // In Release, use where the program is executed from
+            return Directory.GetCurrentDirectory();
+#endif
         }
 
         private void EnsureDirectories()

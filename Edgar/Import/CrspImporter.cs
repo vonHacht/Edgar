@@ -13,10 +13,18 @@ namespace Edgar.Companies
 {
     public sealed class CrspImporter
     {
-        private static readonly ILogger<Program> _logger = EdgarLogger.CreateLogger<Program>();
+        private static readonly ILogger<CrspImporter> _logger =
+            EdgarLogger.CreateLogger<CrspImporter>();
 
         private readonly string _crspPath;
         private readonly CsvConfiguration _csvConfig;
+
+        // Cache header indices once
+        private volatile bool _indicesLoaded;
+        private readonly object _indicesLock = new();
+
+        private int _permnoIdx, _dateIdx, _prcIdx, _openIdx, _bidIdx, _askIdx, _bidloIdx, _askhiIdx;
+        private int _volIdx, _numtrdIdx, _shroutIdx, _retIdx, _retxIdx, _dlstcdIdx, _dlretIdx, _dlretxIdx, _dlprcIdx;
 
         public CrspImporter(AppSettings settings)
         {
@@ -32,51 +40,24 @@ namespace Edgar.Companies
                 IgnoreBlankLines = true,
                 PrepareHeaderForMatch = args => args.Header.Replace("\uFEFF", "").Trim(),
                 MissingFieldFound = null,
-                HeaderValidated = null
+                HeaderValidated = null,
+                BadDataFound = null
             };
         }
 
-        public List<FirmTradingDay> ReadByPermno(int permno, string year)
+        public HashSet<int> ReadPermnoFromCrsp()
         {
-            if (string.IsNullOrWhiteSpace(year) || year.Length != 4)
-                return [];
-
-            if (!File.Exists(_crspPath))
-                throw new FileNotFoundException($"CRSP file not found: {_crspPath}");
-
-            var targetYear = year.AsSpan(); // compare yyyy via span
+            EnsureFileExists();
+            EnsureIndicesLoaded();
 
             using var reader = new StreamReader(_crspPath);
             using var parser = new CsvParser(reader, _csvConfig);
 
-            // Read header
+            // header
             if (!parser.Read())
                 return [];
 
-            var header = parser.Record ?? Array.Empty<string>();
-
-            int permnoIdx = IndexOf(header, "PERMNO");
-            int dateIdx = IndexOf(header, "date");      // adjust if your column is named differently
-            int prcIdx = IndexOf(header, "PRC");
-            int openIdx = IndexOf(header, "OPENPRC");
-            int bidIdx = IndexOf(header, "BID");
-            int askIdx = IndexOf(header, "ASK");
-            int bidloIdx = IndexOf(header, "BIDLO");
-            int askhiIdx = IndexOf(header, "ASKHI");
-            int volIdx = IndexOf(header, "VOL");
-            int numtrdIdx = IndexOf(header, "NUMTRD");
-            int shroutIdx = IndexOf(header, "SHROUT");
-            int retIdx = IndexOf(header, "RET");
-            int retxIdx = IndexOf(header, "RETX");
-            int dlstcdIdx = IndexOf(header, "DLSTCD");
-            int dlretIdx = IndexOf(header, "DLRET");
-            int dlretxIdx = IndexOf(header, "DLRETX");
-            int dlprcIdx = IndexOf(header, "DLPRC");
-
-            if (permnoIdx < 0 || dateIdx < 0)
-                throw new InvalidDataException("CRSP CSV is missing required columns: PERMNO, date.");
-
-            var results = new List<FirmTradingDay>();
+            var permnos = new HashSet<int>();
 
             while (parser.Read())
             {
@@ -84,53 +65,203 @@ namespace Edgar.Companies
                 if (row is null || row.Length == 0)
                     continue;
 
-                // Filter 1: PERMNO (cheap int parse)
-                if (!TryParseInt(row[permnoIdx], out var rowPermno) || rowPermno != permno)
+                if (!TryParseInt(GetField(row, _permnoIdx), out var permno))
                     continue;
 
-                // Filter 2: year (avoid DateTime/ToString; compare first 4 chars of yyyy-MM-dd)
-                var dateText = row[dateIdx];
+                permnos.Add(permno);
+            }
+
+            return permnos;
+        }
+
+        // ✅ Best method for your pipeline: read once per YEAR and group by permno
+        public Dictionary<int, List<FirmTradingDay>> ReadYearGroupedByPermno(string year)
+        {
+            if (string.IsNullOrWhiteSpace(year) || year.Length != 4)
+                return new();
+
+            EnsureFileExists();
+            EnsureIndicesLoaded();
+
+            var targetYear = year.AsSpan();
+            var dict = new Dictionary<int, List<FirmTradingDay>>(capacity: 8192);
+
+            using var reader = new StreamReader(_crspPath);
+            using var parser = new CsvParser(reader, _csvConfig);
+
+            // header
+            if (!parser.Read())
+                return dict;
+
+            while (parser.Read())
+            {
+                var row = parser.Record;
+                if (row is null || row.Length == 0)
+                    continue;
+
+                // date filter first (cheap string check)
+                var dateText = GetField(row, _dateIdx);
                 if (string.IsNullOrEmpty(dateText) || dateText.Length < 4 ||
                     !dateText.AsSpan(0, 4).SequenceEqual(targetYear))
                     continue;
 
-                // Parse date only for matches
+                // permno parse
+                if (!TryParseInt(GetField(row, _permnoIdx), out var permno))
+                    continue;
+
                 if (!TryParseDate(dateText, out var dt))
                     continue;
 
-                var prc = TryParseDouble(row, prcIdx);
+                var tradingDay = ParseTradingDay(row, dt);
 
-                results.Add(new FirmTradingDay
+                if (!dict.TryGetValue(permno, out var list))
                 {
-                    Date = DateOnly.FromDateTime(dt),
+                    list = new List<FirmTradingDay>(capacity: 260);
+                    dict[permno] = list;
+                }
 
-                    ClosePrcRaw = prc.HasValue ? (decimal)prc.Value : null,
-                    Close = prc.HasValue ? (decimal)Math.Abs(prc.Value) : null,
-                    CloseIsMidpoint = prc.HasValue && prc.Value < 0,
-
-                    Open = ToNullableDecimal(TryParseDouble(row, openIdx)),
-                    Bid = ToNullableDecimal(TryParseDouble(row, bidIdx)),
-                    Ask = ToNullableDecimal(TryParseDouble(row, askIdx)),
-                    BidLow = ToNullableDecimal(TryParseDouble(row, bidloIdx)),
-                    AskHigh = ToNullableDecimal(TryParseDouble(row, askhiIdx)),
-
-                    Volume = TryParseLongNullable(row, volIdx),
-                    NumberOfTrades = TryParseIntNullable(row, numtrdIdx),
-
-                    SharesOut = TryParseLongNullable(row, shroutIdx),
-
-                    Ret = TryParseDoubleNullable(row, retIdx),
-                    RetExDiv = TryParseDoubleNullable(row, retxIdx),
-
-                    DelistCode = TryParseIntNullable(row, dlstcdIdx),
-                    DelistRet = TryParseDoubleNullable(row, dlretIdx),
-                    DelistRetExDiv = TryParseDoubleNullable(row, dlretxIdx),
-                    DelistPrice = TryParseDoubleNullable(row, dlprcIdx)
-                });
+                list.Add(tradingDay);
             }
 
+            // Optional: ensure each list is sorted by date
+            foreach (var kvp in dict)
+                kvp.Value.Sort(static (a, b) => a.Date.CompareTo(b.Date));
+
+            return dict;
+        }
+
+        // Convenience method (still one full-file scan). Keep if you need it.
+        public List<FirmTradingDay> ReadByPermno(int permno, string year)
+        {
+            if (string.IsNullOrWhiteSpace(year) || year.Length != 4)
+                return [];
+
+            EnsureFileExists();
+            EnsureIndicesLoaded();
+
+            var targetYear = year.AsSpan();
+            var results = new List<FirmTradingDay>();
+
+            using var reader = new StreamReader(_crspPath);
+            using var parser = new CsvParser(reader, _csvConfig);
+
+            // header
+            if (!parser.Read())
+                return [];
+
+            while (parser.Read())
+            {
+                var row = parser.Record;
+                if (row is null || row.Length == 0)
+                    continue;
+
+                // permno
+                if (!TryParseInt(GetField(row, _permnoIdx), out var rowPermno) || rowPermno != permno)
+                    continue;
+
+                // year
+                var dateText = GetField(row, _dateIdx);
+                if (string.IsNullOrEmpty(dateText) || dateText.Length < 4 ||
+                    !dateText.AsSpan(0, 4).SequenceEqual(targetYear))
+                    continue;
+
+                if (!TryParseDate(dateText, out var dt))
+                    continue;
+
+                results.Add(ParseTradingDay(row, dt));
+            }
+
+            results.Sort(static (a, b) => a.Date.CompareTo(b.Date));
             return results;
         }
+
+        // -------------------- internals --------------------
+
+        private void EnsureFileExists()
+        {
+            if (!File.Exists(_crspPath))
+                throw new FileNotFoundException($"CRSP file not found: {_crspPath}");
+        }
+
+        private void EnsureIndicesLoaded()
+        {
+            if (_indicesLoaded)
+                return;
+
+            lock (_indicesLock)
+            {
+                if (_indicesLoaded)
+                    return;
+
+                using var reader = new StreamReader(_crspPath);
+                using var parser = new CsvParser(reader, _csvConfig);
+
+                if (!parser.Read())
+                    throw new InvalidDataException("CRSP CSV appears empty (no header).");
+
+                var header = parser.Record ?? Array.Empty<string>();
+
+                _permnoIdx = IndexOf(header, "PERMNO");
+                _dateIdx = IndexOf(header, "date");
+
+                _prcIdx = IndexOf(header, "PRC");
+                _openIdx = IndexOf(header, "OPENPRC");
+                _bidIdx = IndexOf(header, "BID");
+                _askIdx = IndexOf(header, "ASK");
+                _bidloIdx = IndexOf(header, "BIDLO");
+                _askhiIdx = IndexOf(header, "ASKHI");
+                _volIdx = IndexOf(header, "VOL");
+                _numtrdIdx = IndexOf(header, "NUMTRD");
+                _shroutIdx = IndexOf(header, "SHROUT");
+                _retIdx = IndexOf(header, "RET");
+                _retxIdx = IndexOf(header, "RETX");
+                _dlstcdIdx = IndexOf(header, "DLSTCD");
+                _dlretIdx = IndexOf(header, "DLRET");
+                _dlretxIdx = IndexOf(header, "DLRETX");
+                _dlprcIdx = IndexOf(header, "DLPRC");
+
+                if (_permnoIdx < 0 || _dateIdx < 0)
+                    throw new InvalidDataException("CRSP CSV is missing required columns: PERMNO, date.");
+
+                _indicesLoaded = true;
+            }
+        }
+
+        private FirmTradingDay ParseTradingDay(string[] row, DateTime dt)
+        {
+            var prc = TryParseDoubleNullable(row, _prcIdx);
+
+            return new FirmTradingDay
+            {
+                Date = dt,
+
+                ClosePrcRaw = prc.HasValue ? (decimal)prc.Value : null,
+                Close = prc.HasValue ? (decimal)Math.Abs(prc.Value) : null,
+                CloseIsMidpoint = prc.HasValue && prc.Value < 0,
+
+                Open = ToNullableDecimal(TryParseDoubleNullable(row, _openIdx)),
+                Bid = ToNullableDecimal(TryParseDoubleNullable(row, _bidIdx)),
+                Ask = ToNullableDecimal(TryParseDoubleNullable(row, _askIdx)),
+                BidLow = ToNullableDecimal(TryParseDoubleNullable(row, _bidloIdx)),
+                AskHigh = ToNullableDecimal(TryParseDoubleNullable(row, _askhiIdx)),
+
+                Volume = TryParseLongNullable(row, _volIdx),
+                NumberOfTrades = TryParseIntNullable(row, _numtrdIdx),
+
+                SharesOut = TryParseLongNullable(row, _shroutIdx),
+
+                Ret = TryParseDoubleNullable(row, _retIdx),
+                RetExDiv = TryParseDoubleNullable(row, _retxIdx),
+
+                DelistCode = TryParseIntNullable(row, _dlstcdIdx),
+                DelistRet = TryParseDoubleNullable(row, _dlretIdx),
+                DelistRetExDiv = TryParseDoubleNullable(row, _dlretxIdx),
+                DelistPrice = TryParseDoubleNullable(row, _dlprcIdx)
+            };
+        }
+
+        private static string? GetField(string[] row, int idx)
+            => (idx >= 0 && idx < row.Length) ? row[idx] : null;
 
         private static int IndexOf(string[] header, string name)
         {
@@ -144,21 +275,15 @@ namespace Edgar.Companies
             => int.TryParse(s, NumberStyles.Integer, CultureInfo.InvariantCulture, out v);
 
         private static int? TryParseIntNullable(string[] row, int idx)
-            => (idx >= 0 && idx < row.Length && int.TryParse(row[idx], NumberStyles.Integer, CultureInfo.InvariantCulture, out var v))
-                ? v : null;
+            => int.TryParse(GetField(row, idx), NumberStyles.Integer, CultureInfo.InvariantCulture, out var v) ? v : null;
 
         private static long? TryParseLongNullable(string[] row, int idx)
-            => (idx >= 0 && idx < row.Length && long.TryParse(row[idx], NumberStyles.Integer, CultureInfo.InvariantCulture, out var v))
-                ? v : null;
+            => long.TryParse(GetField(row, idx), NumberStyles.Integer, CultureInfo.InvariantCulture, out var v) ? v : null;
 
         private static double? TryParseDoubleNullable(string[] row, int idx)
-            => (idx >= 0 && idx < row.Length && double.TryParse(row[idx], NumberStyles.Float | NumberStyles.AllowThousands, CultureInfo.InvariantCulture, out var v))
-                ? v : null;
+            => double.TryParse(GetField(row, idx), NumberStyles.Float | NumberStyles.AllowThousands, CultureInfo.InvariantCulture, out var v) ? v : null;
 
-        private static double? TryParseDouble(string[] row, int idx)
-            => TryParseDoubleNullable(row, idx);
-
-        private static bool TryParseDate(string s, out DateTime dt)
+        private static bool TryParseDate(string? s, out DateTime dt)
             => DateTime.TryParseExact(s, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out dt);
 
         private static decimal? ToNullableDecimal(double? v)
