@@ -22,7 +22,8 @@ namespace Edgar.Pipeline
         private const int MinCleanTextChars = 2000;
         private static readonly int[] Years =
         {
-            2009, 2010, 2011, 2012, 2013, 2014,
+            //2009, 
+            2010, 2011, 2012, 2013, 2014,
             2015, 2016, 2017, 2018, 2019,
             2020, 2021, 2022, 2023, 2024
         };
@@ -106,24 +107,6 @@ namespace Edgar.Pipeline
 
             void Stage(string msg) => _logger.LogInformation("CIK {CIK} | {Msg}", filing.CIK, msg);
 
-            if (above2009below2024)
-            {
-
-                var bookToMarket = _bookToMarketImporter.ReadByCik(filing.CIK, filing.DateFiled);
-
-                if (Filter.Filter.BookValueAboveZero(bookToMarket))
-                {
-                    Stage("Book value below 0 or negative -> writing uncomplete doc");
-                    await WriteUncompleteAsync(
-                        yearKey,
-                        filing,
-                        reason: $"Book value is {Filter.Filter.BookValue(bookToMarket):F2} (below 0 or negative)",
-                        ct: ct);
-                    return;
-                }
-
-            }
-
             Stage("Downloading filing HTML (cached if available)");
             var htmlPath = await _downloader.GetOrDownloadPrimaryDocAsync(filing);
 
@@ -195,7 +178,7 @@ namespace Edgar.Pipeline
                 return;
             }
 
-            if (Filter.Filter.IsStockPriceBelow3OnDayBeforeFiling(filing.DateFiled, tradingDays))
+            /*if (Filter.Filter.IsStockPriceBelow3OnDayBeforeFiling(filing.DateFiled, tradingDays))
             {
                 Stage("Stock price on day before filing is below $3 -> writing uncomplete doc");
                 await WriteUncompleteAsync(
@@ -207,6 +190,35 @@ namespace Edgar.Pipeline
                     ticker: ccm.Ticker);
 
                 return;
+            }*/
+
+            if (above2009below2024)
+            {
+                var bookToMarket = _bookToMarketImporter.ReadByCik(filing.CIK, filing.DateFiled);
+
+                if (bookToMarket is null)
+                {
+                    Stage("Book-to-market data not found -> writing uncomplete doc");
+                    await WriteUncompleteAsync(
+                        yearKey,
+                        filing,
+                        reason: "Book-to-market data not found for filing date",
+                        ct: ct,
+                        name: ccm.CompanyName,
+                        ticker: ccm.Ticker);
+                    return;
+                }
+
+                if (Filter.Filter.BookValueAboveZero(bookToMarket))
+                {
+                    Stage("Book value below 0 or negative -> writing uncomplete doc");
+                    await WriteUncompleteAsync(
+                        yearKey,
+                        filing,
+                        reason: $"Book value is {Filter.Filter.BookValue(bookToMarket):F2} (below 0 or negative)",
+                        ct: ct);
+                    return;
+                }
             }
 
             Stage("Writing complete document to MongoDB");
