@@ -8,7 +8,7 @@ class Program
 
         DotNetEnv.Env.Load(envPath); */
 
-        var pipeline = new PanelBuilder();
-        await pipeline.RunAsync();
+        //var pipeline = new PanelBuilder();
+        //await pipeline.RunAsync();
     }
 }

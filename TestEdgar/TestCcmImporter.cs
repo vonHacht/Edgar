@@ -8,15 +8,13 @@ namespace TestEdgar
         private readonly string _edgarRoot = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "Edgar");
 
         [Fact]
-        public async Task TestImport()
+        public async Task TestReadAllYearsUniqueCcms()
         {
             AppSettings settings = AppSettings.Load(_edgarRoot);
 
             CcmImporter importer = new CcmImporter(settings);
 
-            string cik = "0001069878";
-
-            var result = importer.ReadByCik(cik, "2020");
+            var result = importer.ReadAllYearsUniqueCcms();
 
             Console.WriteLine(result);
         }

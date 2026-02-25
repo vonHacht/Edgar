@@ -1,47 +1,61 @@
-﻿using CsvHelper.Configuration;
-
-namespace Edgar.Models
+﻿namespace Edgar.Models
 {
     public class BookToMarket
     {
-        public string? LPERMNO { get; set; }
-        public string? cik { get; set; }
-        public string? LINKDT { get; set; }
-        public string? LINKENDDT { get; set; }
-        public string? GVKEY { get; set; }
-        public DateTime? datadate { get; set; }
-        public string? fyear { get; set; }
+        
+        public double CommonEquity { get; set; } // ceq
+        public double ShareholdersEquity { get; set; } // seq
 
-        public double? ceq { get; set; }
-        public double? seq { get; set; }
-        public double? txditc { get; set; }
-        public double? pstkrv { get; set; }
-        public double? pstkl { get; set; }
-        public double? pstk { get; set; }
-        public double? at { get; set; }
-        public double? lt { get; set; }
-    }
+        public double PrefferedStockRedemptionValue { get; set; } // pstkrv
 
-    public sealed class BookToMarketMap : ClassMap<BookToMarket>
-    {
-        public BookToMarketMap()
+        public double PrefferedStockLiquidatingValue { get; set; } // pstkl
+
+        public double PrefferedStock { get; set; } // pstk
+
+        public double DeferredTaxes { get; set; } // txditc
+
+        public double TotalAssets { get; set; } // at
+
+        public double TotalLiabilities { get; set; } // lt
+
+        public double BookEquity { get { return _bookEquity(); }  }
+
+        private double _bookEquity()
         {
-            Map(m => m.LPERMNO).Name("LPERMNO");
-            Map(m => m.cik).Name("cik");
-            Map(m => m.LINKDT).Name("LINKDT");
-            Map(m => m.LINKENDDT).Name("LINKENDDT");
-            Map(m => m.GVKEY).Name("GVKEY");
-            Map(m => m.datadate).Name("datadate");
-            Map(m => m.fyear).Name("fyear");
+            static bool IsMissing(double v) => double.IsNaN(v);
+            static bool HasValue(double v) => !double.IsNaN(v);
+            static bool Pos(double v) => !double.IsNaN(v) && v > 0.0;
 
-            Map(m => m.ceq).Name("ceq");
-            Map(m => m.seq).Name("seq");
-            Map(m => m.txditc).Name("txditc");
-            Map(m => m.pstkrv).Name("pstkrv");
-            Map(m => m.pstkl).Name("pstkl");
-            Map(m => m.pstk).Name("pstk");
-            Map(m => m.at).Name("at");
-            Map(m => m.lt).Name("lt");
+            // Preferred stock priority: pstkrv -> pstkl -> pstk
+            double preferred =
+                Pos(PrefferedStockRedemptionValue) ? PrefferedStockRedemptionValue :
+                Pos(PrefferedStockLiquidatingValue) ? PrefferedStockLiquidatingValue :
+                Pos(PrefferedStock) ? PrefferedStock :
+                0.0;
+
+            double baseEquity;
+
+            if (Pos(ShareholdersEquity))
+            {
+                baseEquity = ShareholdersEquity;
+            }
+            else if (Pos(CommonEquity))
+            {
+                // Use CEQ as-is; preferred is handled consistently below
+                baseEquity = CommonEquity;
+            }
+            else if (Pos(TotalAssets) && HasValue(TotalLiabilities))
+            {
+                baseEquity = TotalAssets - TotalLiabilities; // lt may be 0
+            }
+            else
+            {
+                baseEquity = 0.0;
+            }
+
+            double deferred = Pos(DeferredTaxes) ? DeferredTaxes : 0.0;
+
+            return baseEquity + deferred - preferred;
         }
     }
 }

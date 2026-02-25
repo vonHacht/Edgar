@@ -1,20 +1,20 @@
 ﻿using Edgar.Config;
-using Edgar.Import;
+using Edgar.Pipeline;
 
 namespace TestEdgar
 {
-    public class TestBookToMarketImport
+    public class TestEdgarBuilder
     {
         private readonly string _edgarRoot = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "Edgar");
 
         [Fact]
-        public async Task TestImport()
+        public async Task Test()
         {
             AppSettings settings = AppSettings.Load(_edgarRoot);
 
-            BookToMarketImporter importer = new BookToMarketImporter(settings);
+            EdgarBuilder edgarBuilder = new EdgarBuilder(settings);
 
-            var result = importer.ReadAllBookToMarket();
+            var result = await edgarBuilder.DownloadFilingsForYear(2020);
 
             Console.WriteLine(result);
         }

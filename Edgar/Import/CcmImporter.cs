@@ -4,29 +4,25 @@ using CsvHelper;
 using CsvHelper.Configuration;
 
 using Edgar.Config;
-using Edgar.Logging;
-using Edgar.Models;
-
-using Microsoft.Extensions.Logging;
 
 namespace Edgar.Import
 {
     public sealed class CcmImporter
     {
-        private static readonly ILogger<Program> _logger =
-            EdgarLogger.CreateLogger<Program>();
-
         private readonly string _ccmPath;
         private readonly CsvConfiguration _csvConfig;
 
-        // Cache: Year -> all CIKs present that year
-        private readonly Dictionary<string, HashSet<string>> _cikPresenceByYear = new();
+        // Column indices
+        private int _cikIdx, _permnoIdx, _permcoIdx, _companyNameIdx, _tickerIdx, _datadateIdx;
 
         public CcmImporter(AppSettings settings)
         {
             ArgumentNullException.ThrowIfNull(settings);
 
-            _ccmPath = settings.CcmFilename;
+            _ccmPath = settings.CcmFilename
+                ?? throw new ArgumentException("CcmFilename is null.", nameof(settings));
+
+            EnsureFileExists(_ccmPath);
 
             _csvConfig = new CsvConfiguration(CultureInfo.InvariantCulture)
             {
@@ -36,57 +32,23 @@ namespace Edgar.Import
                 IgnoreBlankLines = true,
                 PrepareHeaderForMatch = args => args.Header.Replace("\uFEFF", "").Trim(),
                 MissingFieldFound = null,
-                HeaderValidated = null
+                HeaderValidated = null,
+                BadDataFound = null
             };
+
+            LoadIndices();
         }
 
-        public List<Ccm> ReadByCik(string cik, string year)
+        public CikPermnoMap ReadAllYearsUniqueCcms()
         {
-            if (string.IsNullOrWhiteSpace(cik) || string.IsNullOrWhiteSpace(year))
-                return [];
+            var results = new CikPermnoMap();
 
-            if (!File.Exists(_ccmPath))
-                throw new FileNotFoundException($"CCM path not found: {_ccmPath}");
-
-            var targetCik = cik.Trim();
-            var targetYear = year.Trim();
-
-            // Build presence cache if first time for this year
-            if (!_cikPresenceByYear.TryGetValue(targetYear, out var cikSet))
-            {
-                cikSet = BuildCikPresenceForYear(targetYear);
-                _cikPresenceByYear[targetYear] = cikSet;
-
-                _logger.LogInformation(
-                    "Built CCM presence cache for year {Year}, CIK count={Count}",
-                    targetYear, cikSet.Count);
-            }
-
-            // If CIK not present → return immediately
-            if (!cikSet.Contains(targetCik))
-                return [];
-
-            // Otherwise read rows normally
-            return ReadRowsForCik(targetCik, targetYear);
-        }
-
-        private HashSet<string> BuildCikPresenceForYear(string targetYear)
-        {
             using var reader = new StreamReader(_ccmPath);
-            var parser = new CsvParser(reader, _csvConfig);
+            using var parser = new CsvParser(reader, _csvConfig);
 
+            // consume header
             if (!parser.Read())
-                return new HashSet<string>(StringComparer.Ordinal);
-
-            var header = parser.Record ?? Array.Empty<string>();
-
-            int cikIdx = IndexOf(header, "cik");
-            int yearIdx = IndexOf(header, "datadate");
-
-            if (cikIdx < 0 || yearIdx < 0)
-                throw new InvalidDataException("CCM CSV missing cik/datadate");
-
-            var set = new HashSet<string>(StringComparer.Ordinal);
+                return results;
 
             while (parser.Read())
             {
@@ -94,71 +56,61 @@ namespace Edgar.Import
                 if (row is null || row.Length == 0)
                     continue;
 
-                if (!MatchesYear(row[yearIdx], targetYear))
+                // datadate
+                //if (!TryParseDate(GetField(row, _datadateIdx), out var datadate))
+                //    continue;
+
+                // cik
+                var cik = (GetField(row, _cikIdx) ?? string.Empty).Trim();
+                if (cik.Length == 0)
                     continue;
 
-                var cik = row[cikIdx]?.Trim();
-                if (!string.IsNullOrEmpty(cik))
-                    set.Add(cik);
-            }
+                // permno / permco (at least one)
+                var permno = ReadIntOrNull(row, _permnoIdx);
+                //var permco = ReadIntOrNull(row, _permcoIdx);
+                //if (permno is null && permco is null)
+                //    continue;
 
-            return set;
-        }
-
-        private List<Ccm> ReadRowsForCik(string targetCik, string targetYear)
-        {
-            using var reader = new StreamReader(_ccmPath);
-            var parser = new CsvParser(reader, _csvConfig);
-
-            if (!parser.Read())
-                return [];
-
-            var header = parser.Record ?? Array.Empty<string>();
-
-            int cikIdx = IndexOf(header, "cik");
-            int permnoIdx = IndexOf(header, "LPERMNO");
-            int permcoIdx = IndexOf(header, "LPERMCO");
-            int yearIdx = IndexOf(header, "datadate");
-            int companyNameIdx = IndexOf(header, "conm");
-            int tickerIdx = IndexOf(header, "tic");
-
-            if (cikIdx < 0 || permnoIdx < 0 || permcoIdx < 0 ||
-                yearIdx < 0 || companyNameIdx < 0 || tickerIdx < 0)
-                throw new InvalidDataException("CCM CSV missing required columns");
-
-            var results = new List<Ccm>();
-
-            while (parser.Read())
-            {
-                var row = parser.Record;
-                if (row is null || row.Length == 0)
-                    continue;
-
-                if (!string.Equals(row[cikIdx], targetCik, StringComparison.Ordinal))
-                    continue;
-
-                if (!MatchesYear(row[yearIdx], targetYear))
-                    continue;
-
-                int? permno = TryParseInt(row[permnoIdx]);
-                int? permco = TryParseInt(row[permcoIdx]);
-                DateTime? tradingDay = DateTime.TryParse(
-                    row[yearIdx],
-                    CultureInfo.InvariantCulture,
-                    DateTimeStyles.None,
-                    out var dt) ? dt : null;
-
-                results.Add(new Ccm
+                /*var ccm = new Ccm
                 {
                     permno = permno,
                     permco = permco,
-                    tradingDay = tradingDay,
-                    CompanyName = row[companyNameIdx]?.Trim() ?? "",
-                    Ticker = row[tickerIdx]?.Trim() ?? ""
-                });
+                    CompanyName = (GetField(row, _companyNameIdx) ?? string.Empty).Trim(),
+                    Ticker = (GetField(row, _tickerIdx) ?? string.Empty).Trim(),
+                };*/
+
+                //results.Add(datadate.Year, cik, ccm);
+                results.Add(permno ?? 0, cik);
             }
 
             return results;
+        }
+
+        private void LoadIndices()
+        {
+            using var reader = new StreamReader(_ccmPath);
+            using var parser = new CsvParser(reader, _csvConfig);
+
+            if (!parser.Read())
+                throw new InvalidDataException("CCM CSV appears empty (no header).");
+
+            var header = parser.Record ?? Array.Empty<string>();
+
+            _cikIdx = IndexOf(header, "cik");
+            _permnoIdx = IndexOf(header, "LPERMNO");
+            _permcoIdx = IndexOf(header, "LPERMCO");
+            _companyNameIdx = IndexOf(header, "conm");
+            _tickerIdx = IndexOf(header, "tic");
+            _datadateIdx = IndexOf(header, "datadate");
+
+            if (_cikIdx < 0 || _datadateIdx < 0 || _permnoIdx < 0 || _permcoIdx < 0 || _companyNameIdx < 0 || _tickerIdx < 0)
+                throw new InvalidDataException("CCM CSV is missing required columns: cik, datadate, LPERMNO, LPERMCO, conm, tic");
+        }
+
+        private static void EnsureFileExists(string path)
+        {
+            if (!File.Exists(path))
+                throw new FileNotFoundException($"CCM path not found: {path}", path);
         }
 
         private static int IndexOf(string[] header, string name)
@@ -169,13 +121,17 @@ namespace Edgar.Import
             return -1;
         }
 
-        private static int? TryParseInt(string? s)
-            => int.TryParse(s, NumberStyles.Integer, CultureInfo.InvariantCulture, out var v) ? v : null;
+        private static string? GetField(string[] row, int idx)
+            => (idx >= 0 && idx < row.Length) ? row[idx] : null;
 
-        private static bool MatchesYear(string? dateText, string targetYear)
-            => !string.IsNullOrEmpty(dateText)
-               && dateText.Length >= 4
-               && dateText.AsSpan(0, 4).SequenceEqual(targetYear);
+        private static int? ReadIntOrNull(string[] row, int idx)
+        {
+            var s = GetField(row, idx);
+            return int.TryParse(s, NumberStyles.Integer, CultureInfo.InvariantCulture, out var v) ? v : null;
+        }
+
+        private static bool TryParseDate(string? s, out DateTime dt)
+            => DateTime.TryParseExact(s, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out dt);
     }
 }
 

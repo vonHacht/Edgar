@@ -23,7 +23,7 @@ namespace Edgar.Edgar
         /// <summary>
         /// Returns the local file path to the primary doc HTML. Downloads it if not cached.
         /// </summary>
-        public async Task<string> GetOrDownloadPrimaryDocAsync(Filing filing, CancellationToken ct = default)
+        public async Task<string> GetOrDownloadPrimaryDocAsync(string year, Filing filing, CancellationToken ct = default)
         {
             if (filing == null) throw new ArgumentNullException(nameof(filing));
             if (string.IsNullOrWhiteSpace(filing.CIK)) throw new ArgumentException("Filing.CIK is required.");
@@ -33,7 +33,7 @@ namespace Edgar.Edgar
             var accNumNoDashes = Accession.GetAccessionFromFilename(filing.Filename, true);
             var accNumDashed = Accession.GetAccessionFile(filing.Filename);
 
-            var localDir = Path.Combine(_settings.RawDir, filing.CIK, accNumNoDashes);
+            var localDir = Path.Combine(_settings.RawDir, year, filing.CIK, accNumNoDashes);
 
             Directory.CreateDirectory(localDir);
 

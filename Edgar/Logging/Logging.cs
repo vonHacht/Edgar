@@ -12,11 +12,14 @@ namespace Edgar.Logging
         private static ILoggerFactory? _loggerFactory;
         private static readonly object _lock = new();
 
-        private static AppSettings _settings = AppSettings.Load();
+        private static AppSettings? _settings;
 
-        public static ILogger<T> CreateLogger<T>()
+        public static ILogger<T> CreateLogger<T>(AppSettings? settings = null)
         {
-            EnsureInitialized();
+            _settings = settings == null ? AppSettings.Load() : settings;
+
+            EnsureInitialized();            
+
             return _loggerFactory!.CreateLogger<T>();
         }
 
@@ -52,7 +55,7 @@ namespace Edgar.Logging
                 {
                     config = config.WriteTo.File(
                         _settings.LogFilename,
-                        rollingInterval: RollingInterval.Day,
+                        rollingInterval: RollingInterval.Minute,
                         retainedFileCountLimit: 7,
                         outputTemplate:
                         "{Timestamp:yyyy-MM-dd HH:mm:ss} [{Level:u3}] {Message:lj}{NewLine}{Exception}"

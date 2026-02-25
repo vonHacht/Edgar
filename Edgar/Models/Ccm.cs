@@ -30,8 +30,6 @@
         /// </summary>
         public int? permco { get; set; }
 
-        public DateTime? tradingDay { get; set; }
-
         public string CompanyName { get; set; } = string.Empty;
 
         public string Ticker { get; set; } = string.Empty;
