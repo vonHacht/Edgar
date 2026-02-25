@@ -18,7 +18,7 @@ namespace Edgar.Logging
         {
             _settings = settings == null ? AppSettings.Load() : settings;
 
-            EnsureInitialized();            
+            EnsureInitialized();
 
             return _loggerFactory!.CreateLogger<T>();
         }
@@ -55,7 +55,7 @@ namespace Edgar.Logging
                 {
                     config = config.WriteTo.File(
                         _settings.LogFilename,
-                        rollingInterval: RollingInterval.Minute,
+                        rollingInterval: RollingInterval.Infinite,
                         retainedFileCountLimit: 7,
                         outputTemplate:
                         "{Timestamp:yyyy-MM-dd HH:mm:ss} [{Level:u3}] {Message:lj}{NewLine}{Exception}"

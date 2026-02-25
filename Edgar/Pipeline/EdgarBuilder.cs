@@ -84,7 +84,7 @@ namespace Edgar.Pipeline
             var cleanedText = HtmlCleaner.HtmlToText(html);
 
             // FILTER
-            if (Filter.Filter.FilingToShort(cleanedText)) 
+            if (Filter.Filter.FilingToShort(cleanedText))
             {
                 Stage(filing.CIK, "Filings to short");
                 return "";

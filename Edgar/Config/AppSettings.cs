@@ -18,7 +18,15 @@
         // ----------------------------
         public string RiskPanelFilename { get; init; }
         public string CikMatchesFilename { get; init; }
-        public string LogFilename { get; init; }
+        public string LogFilename
+        {
+            get
+            {
+                return _logFilenameWithoutTimestamp + "_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".log";
+            }
+        }
+
+        private string _logFilenameWithoutTimestamp;
         public string BookToMarketFilename { get; init; }
         public string CcmFilename { get; init; }
         public string CrspFilename { get; init; }
@@ -73,7 +81,7 @@
                 CompaniesDir = companiesDir,
                 RiskPanelFilename = Path.Combine(outputDir, "risk_panel.csv"),
                 CikMatchesFilename = Path.Combine(outputDir, "cik_matches.csv"),
-                LogFilename = Path.Combine(outputDir, "edgar.log"),
+                _logFilenameWithoutTimestamp = Path.Combine(outputDir, "edgar"),
                 BookToMarketFilename = Path.Combine(companiesDir, "booktomarket.csv"),
                 CcmFilename = Path.Combine(companiesDir, "ccm.csv"),
                 CrspFilename = Path.Combine(companiesDir, "crsp.csv"),

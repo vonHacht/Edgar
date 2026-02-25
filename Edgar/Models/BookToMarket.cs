@@ -2,7 +2,7 @@
 {
     public class BookToMarket
     {
-        
+
         public double CommonEquity { get; set; } // ceq
         public double ShareholdersEquity { get; set; } // seq
 
@@ -18,7 +18,7 @@
 
         public double TotalLiabilities { get; set; } // lt
 
-        public double BookEquity { get { return _bookEquity(); }  }
+        public double BookEquity { get { return _bookEquity(); } }
 
         private double _bookEquity()
         {

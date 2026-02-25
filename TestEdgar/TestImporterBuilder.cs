@@ -24,9 +24,9 @@ namespace TestEdgar
 
             ImporterBuilder importer = new ImporterBuilder(settings);
 
-            //importer.LoadDataToMemory();
+            importer.LoadDataToMemory();
 
-            //importer.EnsureConsistentData();
+            importer.EnsureConsistentData();
         }
     }
 }

@@ -102,7 +102,7 @@ namespace Edgar.Edgar
                 var form = parts[2].Trim();
                 var dateStr = parts[3].Trim();
                 var filename = parts[4].Trim(); // relative under /Archives/
-                
+
 
                 if (!int.TryParse(cikRaw, out var cikInt))
                 {

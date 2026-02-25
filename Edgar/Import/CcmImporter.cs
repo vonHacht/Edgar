@@ -56,10 +56,6 @@ namespace Edgar.Import
                 if (row is null || row.Length == 0)
                     continue;
 
-                // datadate
-                //if (!TryParseDate(GetField(row, _datadateIdx), out var datadate))
-                //    continue;
-
                 // cik
                 var cik = (GetField(row, _cikIdx) ?? string.Empty).Trim();
                 if (cik.Length == 0)
@@ -67,19 +63,7 @@ namespace Edgar.Import
 
                 // permno / permco (at least one)
                 var permno = ReadIntOrNull(row, _permnoIdx);
-                //var permco = ReadIntOrNull(row, _permcoIdx);
-                //if (permno is null && permco is null)
-                //    continue;
 
-                /*var ccm = new Ccm
-                {
-                    permno = permno,
-                    permco = permco,
-                    CompanyName = (GetField(row, _companyNameIdx) ?? string.Empty).Trim(),
-                    Ticker = (GetField(row, _tickerIdx) ?? string.Empty).Trim(),
-                };*/
-
-                //results.Add(datadate.Year, cik, ccm);
                 results.Add(permno ?? 0, cik);
             }
 
@@ -129,9 +113,6 @@ namespace Edgar.Import
             var s = GetField(row, idx);
             return int.TryParse(s, NumberStyles.Integer, CultureInfo.InvariantCulture, out var v) ? v : null;
         }
-
-        private static bool TryParseDate(string? s, out DateTime dt)
-            => DateTime.TryParseExact(s, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out dt);
     }
 }
 

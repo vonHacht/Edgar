@@ -1,22 +1,31 @@
-﻿using Edgar.Config;
-using Edgar.Import;
+﻿using Edgar.Import;
 
 namespace TestEdgar
 {
     public class TestBookToMarketImport
     {
-        private readonly string _edgarRoot = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "Edgar");
-
         [Fact]
         public async Task TestImport()
         {
-            AppSettings settings = AppSettings.Load(_edgarRoot);
 
-            BookToMarketImporter importer = new BookToMarketImporter(settings);
+            BookToMarketImporter importer = new BookToMarketImporter(Utilities.Settings);
 
-            var result = importer.ReadAllBookToMarket();
+            CcmImporter ccmImporter = new CcmImporter(Utilities.Settings);
 
-            Console.WriteLine(result);
+            BookToMarketData result = importer.ReadAllBookToMarket();
+
+            CikPermnoMap cikPermnoMap = ccmImporter.ReadAllYearsUniqueCcms();
+
+            var cik = cikPermnoMap.GetCiks(10001);
+
+            foreach (var c in cik)
+            {
+                var a = result.HaveCik(2009, c);
+
+                Console.WriteLine(result);
+
+            }
+
         }
     }
 }
