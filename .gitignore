@@ -123,3 +123,4 @@ dmypy.json
 Edgar/Data/raw
 Edgar/Data/companies
 Edgar/Data/processed
+Edgar/output

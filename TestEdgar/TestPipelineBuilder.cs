@@ -14,7 +14,7 @@ namespace TestEdgar
         {
             PipelineBuilder pipelineBuilder = new PipelineBuilder(Utilities.Settings);
 
-            pipelineBuilder.Run2009To2024();
+            pipelineBuilder.RunAsync();
         }
     }
 }

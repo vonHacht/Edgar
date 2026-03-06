@@ -28,21 +28,27 @@ namespace Edgar.Pipeline
         private FilingDownloader _downloader = null!;
         private readonly ItemSectionExtractor _extractor = new ItemSectionExtractor();
 
+        private static readonly int[] Years =
+       {
+            2009, 
+            2010, 2011, 2012, 2013, 2014,
+            2015, 2016, 2017, 2018, 2019,
+            2020, 2021, 2022, 2023, 2024
+        };
+
         public PipelineBuilder(AppSettings appSettings)
         {
             _appSettings = appSettings;
             _logger = EdgarLogger.CreateLogger<Program>(appSettings);
         }
 
-        public void Run2009To2024()
+        public void RunAsync()
         {
             LoadDataToMemory();
             LoadEdgarClient();
 
-            for (var year = 2009; year <= 2024; year++)
-            {
-                _ = DownloadFilingsForYear(year).GetAwaiter().GetResult();
-            }
+            foreach (var year in Years)
+                DownloadFilingsForYear(year).GetAwaiter().GetResult();
         }
 
         public void LoadDataToMemory()
@@ -66,15 +72,12 @@ namespace Edgar.Pipeline
             _downloader = new FilingDownloader(_edgarClient, _appSettings);
         }
 
-        public async Task<List<string>> DownloadFilingsForYear(int year)
+        public async Task DownloadFilingsForYear(int year)
         {
             _logger.LogInformation("----- EDGAR PROCESS YEAR {Year} -----", year);
 
             var filings = await _indexService.Get10KFilingsForYearAsync(year);
             _logger.LogInformation("Found {Count} filings for {Year} in Edgar database", filings.Count, year);
-
-            // Keep if later stages add outputs; otherwise remove.
-            var savedPaths = new List<string>(capacity: filings.Count);
 
             var sw = Stopwatch.StartNew();
             var yearKey = year.ToString(CultureInfo.InvariantCulture);
@@ -108,7 +111,7 @@ namespace Edgar.Pipeline
                         continue;
                     }
 
-                    if(Filter.FilterFunctions.Filter60DaysBeforeAfter(permnos.First(), year, _crspData))
+                    if(!FilterFunctions.Filter60DaysBeforeAfter(permnos.First(), year, _crspData))
                     {
                         LogCik(filing.CIK, "Skipping filing due to failing 60 days before/after filter.");
                         continue;
@@ -120,7 +123,12 @@ namespace Edgar.Pipeline
                     // TODO: Do something with extractedSections, tradingDays, bookToMarkets, etc.
                     // If you save a file, add it:
                     // savedPaths.Add(outputPath);
-                    FilterProcess.Passed(filing, extractedSections, tradingDays, bookToMarkets);
+                    var filterPassed = FilterProcess.Passed(filing, extractedSections, tradingDays, bookToMarkets);
+
+                    if (filterPassed != "") 
+                    { 
+                        LogCik(filing.CIK, filterPassed);
+                    }
 
                     LogCik(filing.CIK, "Filing {Index}/{Total} for Year {Year} | Finished", i + 1, filings.Count, year);
                 }
@@ -136,8 +144,6 @@ namespace Edgar.Pipeline
 
             sw.Stop();
             _logger.LogInformation("Finished with Edgar database in {Seconds:F1}s", sw.Elapsed.TotalSeconds);
-
-            return savedPaths;
         }
 
         private List<int> GetPermnosOrWarn(Filing filing)
@@ -194,9 +200,10 @@ namespace Edgar.Pipeline
         private async Task<ExtractedSections> ProcessFilingAsync(string yearKey, Filing filing)
         {
             LogCik(filing.CIK, "Downloading filing HTML (cached if available)");
-            // Filter here:
+
             // Only first filing per firm per calendar year
             // Minimum 180 days between two filings for the same firm
+            // 10-K must contain > 2,000 words (fullfilled other way)
             var htmlPath = await _downloader.GetOrDownloadPrimaryDocAsync(yearKey, filing);
 
             LogCik(filing.CIK, "Reading HTML from {HtmlPath}", htmlPath);
