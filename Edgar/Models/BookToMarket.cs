@@ -2,6 +2,7 @@
 {
     public class BookToMarket
     {
+        public DateTime Date { get; init; }
 
         public double CommonEquity { get; set; } // ceq
         public double ShareholdersEquity { get; set; } // seq

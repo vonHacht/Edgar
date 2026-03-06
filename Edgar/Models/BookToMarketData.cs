@@ -1,8 +1,7 @@
 ﻿using Edgar.Models;
 
-public class BookToMarketData : Dictionary<int, Dictionary<string, List<BookToMarket>>>
+public class BookToMarketData : SortedDictionary<int, Dictionary<string, List<BookToMarket>>>
 {
-
     public void Add(int year, string cik, BookToMarket item)
     {
         if (item == null) return;
@@ -36,54 +35,6 @@ public class BookToMarketData : Dictionary<int, Dictionary<string, List<BookToMa
             return list;
 
         return Array.Empty<BookToMarket>();
-    }
-
-    public bool Remove(int year, string cik, BookToMarket item)
-    {
-        if (item == null || string.IsNullOrWhiteSpace(cik))
-            return false;
-
-        cik = cik.Trim();
-
-        if (!TryGetValue(year, out var byCik))
-            return false;
-
-        if (!byCik.TryGetValue(cik, out var list))
-            return false;
-
-        bool removed = list.Remove(item);
-
-        if (removed && list.Count == 0)
-        {
-            byCik.Remove(cik);
-            if (byCik.Count == 0)
-                Remove(year);
-        }
-
-        return removed;
-    }
-
-    public bool RemoveFirm(int year, string cik)
-    {
-        if (string.IsNullOrWhiteSpace(cik))
-            return false;
-
-        cik = cik.Trim();
-
-        if (!TryGetValue(year, out var byCik))
-            return false;
-
-        bool removed = byCik.Remove(cik);
-
-        if (removed && byCik.Count == 0)
-            Remove(year);
-
-        return removed;
-    }
-
-    public bool RemoveYear(int year)
-    {
-        return Remove(year);
     }
 
     public bool HaveCik(int year, string cik)

@@ -70,6 +70,7 @@ namespace Edgar.Import
 
                 var item = new BookToMarket
                 {
+                    Date = datadate,
                     CommonEquity = ReadDoubleOrNaN(row, _ceqIdx),
                     ShareholdersEquity = ReadDoubleOrNaN(row, _seqIdx),
 

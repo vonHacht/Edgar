@@ -30,6 +30,14 @@
         public double? DelistRet { get; init; }        // DLRET
         public double? DelistRetExDiv { get; init; }   // DLRETX
         public double? DelistPrice { get; init; }     // DLPRC
+
+        public ExchangeCodes ExchangeCodes { get; init; } // EXCHCD
+
+        // --- Market Cap ---
+        public decimal? MarketCap =>
+            (Close.HasValue && SharesOut.HasValue)
+                ? Close.Value * SharesOut.Value
+                : null;
     }
 
 }

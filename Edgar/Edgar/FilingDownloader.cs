@@ -34,13 +34,12 @@ namespace Edgar.Edgar
             var accNumDashed = Accession.GetAccessionFile(filing.Filename);
 
             var localDir = Path.Combine(_settings.RawDir, year, filing.CIK, accNumNoDashes);
-
-            Directory.CreateDirectory(localDir);
-
             var localPath = Path.Combine(localDir, accNumDashed);
 
             if (File.Exists(localPath) && !_settings.OverwriteRawFiles)
                 return localPath;
+
+            Directory.CreateDirectory(localDir);
 
             var url = BuildPrimaryDocUrl(cikNoZeros, accNumNoDashes, accNumDashed);
 

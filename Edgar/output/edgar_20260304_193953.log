@@ -1,0 +1,12 @@
+2026-03-04 19:39:53 [INF] ----- LOADING CRSP, CCM & BOOKTOMARKET INTO MEMORY -----
+2026-03-04 19:44:47 [INF] ----- FINISHED IN 293.9s -----
+2026-03-04 19:44:47 [INF] ----- EDGAR PROCESS YEAR 2009 -----
+2026-03-04 19:44:51 [INF] Found 9706 filings for 2009 in Edgar database
+2026-03-04 19:44:51 [INF] CIK 0001415813 | Filing 1/9706 for Year 2009 | Starting
+2026-03-04 19:44:59 [INF] CIK 0001415813 | Missing permno mapping in CCM for Company ASIARIM CORP (0001415813).
+2026-03-04 19:45:09 [INF] CIK 0001415813 | Missing Book-to-Market data for Company ASIARIM CORP (0001415813) in 2009.
+2026-03-04 19:45:09 [INF] CIK 0001415813 | Skipping filing due to missing required data (CCM/CRSP/BTM).
+2026-03-04 19:45:09 [INF] CIK 0000788329 | Filing 2/9706 for Year 2009 | Starting
+2026-03-04 19:45:09 [INF] CIK 0000788329 | Downloading filing HTML (cached if available)
+2026-03-04 19:45:09 [INF] CIK 0000788329 | Reading HTML from C:\git\Edgar\Edgar\Data\raw\2009\0000788329\000104216709000004\0001042167-09-000004.txt
+2026-03-04 19:45:09 [INF] CIK 0000788329 | Cleaning + extracting sections

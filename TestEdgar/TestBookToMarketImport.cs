@@ -5,7 +5,7 @@ namespace TestEdgar
     public class TestBookToMarketImport
     {
         [Fact]
-        public async Task TestImport()
+        public async Task TestCcmImport()
         {
 
             BookToMarketImporter importer = new BookToMarketImporter(Utilities.Settings);
@@ -26,6 +26,17 @@ namespace TestEdgar
 
             }
 
+        }
+
+        [Fact]
+        public async Task TestImport()
+        {
+
+            BookToMarketImporter importer = new BookToMarketImporter(Utilities.Settings);
+
+            BookToMarketData result = importer.ReadAllBookToMarket();
+
+            Console.WriteLine(result);
         }
     }
 }

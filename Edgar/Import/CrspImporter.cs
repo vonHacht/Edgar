@@ -14,7 +14,7 @@ namespace Edgar.Companies
         private readonly CsvConfiguration _csvConfig;
 
         // Column indices
-        private int _permnoIdx, _dateIdx, _prcIdx, _openIdx, _bidIdx, _askIdx, _bidloIdx, _askhiIdx;
+        private int _permnoIdx, _dateIdx, _prcIdx, _openIdx, _bidIdx, _askIdx, _bidloIdx, _askhiIdx, _exchdIdx;
         private int _volIdx, _numtrdIdx, _shroutIdx, _retIdx, _retxIdx, _dlstcdIdx, _dlretIdx, _dlretxIdx, _dlprcIdx;
 
         public CrspImporter(AppSettings settings)
@@ -107,6 +107,8 @@ namespace Edgar.Companies
             _dlretxIdx = IndexOf(header, "DLRETX");
             _dlprcIdx = IndexOf(header, "DLPRC");
 
+            _exchdIdx = IndexOf(header, "EXCHCD");
+
             if (_permnoIdx < 0 || _dateIdx < 0)
                 throw new InvalidDataException("CRSP CSV is missing required columns: PERMNO, date.");
         }
@@ -147,7 +149,9 @@ namespace Edgar.Companies
                 DelistCode = ReadIntOrNull(row, _dlstcdIdx),
                 DelistRet = ReadDoubleOrNull(row, _dlretIdx),
                 DelistRetExDiv = ReadDoubleOrNull(row, _dlretxIdx),
-                DelistPrice = ReadDoubleOrNull(row, _dlprcIdx)
+                DelistPrice = ReadDoubleOrNull(row, _dlprcIdx),
+
+                ExchangeCodes = (ExchangeCodes)(ReadIntOrNull(row, _exchdIdx) ?? 0)
             };
         }
 

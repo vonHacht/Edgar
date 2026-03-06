@@ -83,15 +83,6 @@ namespace Edgar.Pipeline
             Stage(filing.CIK, "Cleaning + extracting sections");
             var cleanedText = HtmlCleaner.HtmlToText(html);
 
-            // FILTER
-            if (Filter.Filter.FilingToShort(cleanedText))
-            {
-                Stage(filing.CIK, "Filings to short");
-                return "";
-            }
-
-
-
             // Safer: keep original HTML, write cleaned text alongside it.
             var cleanedPath = Path.ChangeExtension(htmlPath, ".txt");
             await File.WriteAllTextAsync(cleanedPath, cleanedText);
