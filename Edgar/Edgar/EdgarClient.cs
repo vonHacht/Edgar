@@ -1,77 +1,81 @@
-﻿using System.Net.Http.Headers;
+﻿using Edgar.Config;
 
-using Edgar.Config;
-
-namespace Edgar.Edgar
+public sealed class EdgarClient : IDisposable
 {
-    public class EdgarClient : IDisposable
+    private readonly HttpClient _httpClient;
+    private readonly int _delayMs;
+    private readonly SemaphoreSlim _gate = new(1, 1);
+    private DateTime _lastRequestUtc = DateTime.MinValue;
+
+    public EdgarClient(AppSettings settings)
     {
-        private readonly HttpClient _httpClient;
-        private readonly int _delayMs;
-        private DateTime _lastRequestTime = DateTime.MinValue;
-
-        public EdgarClient(AppSettings settings)
+        _delayMs = settings.RequestDelayMs;
+        _httpClient = new HttpClient(new SocketsHttpHandler
         {
-            _delayMs = settings.RequestDelayMs;
+            AutomaticDecompression =
+                System.Net.DecompressionMethods.GZip |
+                System.Net.DecompressionMethods.Deflate
+        })
+        {
+            Timeout = TimeSpan.FromSeconds(60)
+        };
 
-            _httpClient = new HttpClient
+        _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd(settings.UserAgent);
+        _httpClient.DefaultRequestHeaders.Accept.ParseAdd("application/json");
+        _httpClient.DefaultRequestHeaders.Accept.ParseAdd("text/plain");
+        _httpClient.DefaultRequestHeaders.Accept.ParseAdd("*/*");
+    }
+
+    public async Task<string> GetStringAsync(string url, CancellationToken ct = default)
+    {
+        using var response = await SendWithRateLimitAsync(url, ct);
+        return await response.Content.ReadAsStringAsync(ct);
+    }
+
+    public async Task<byte[]> GetBytesAsync(string url, CancellationToken ct = default)
+    {
+        using var response = await SendWithRateLimitAsync(url, ct);
+        return await response.Content.ReadAsByteArrayAsync(ct);
+    }
+
+    private async Task<HttpResponseMessage> SendWithRateLimitAsync(string url, CancellationToken ct)
+    {
+        for (var attempt = 0; attempt < 3; attempt++)
+        {
+            await _gate.WaitAsync(ct);
+            try
             {
-                Timeout = TimeSpan.FromSeconds(60)
-            };
+                var elapsed = DateTime.UtcNow - _lastRequestUtc;
+                var remaining = _delayMs - (int)elapsed.TotalMilliseconds;
+                if (remaining > 0)
+                    await Task.Delay(remaining, ct);
 
-            // SEC requires a descriptive User-Agent
-            _httpClient.DefaultRequestHeaders.UserAgent.Clear();
-            _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd(settings.UserAgent);
-
-            _httpClient.DefaultRequestHeaders.Accept.Clear();
-            _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("text/plain"));
-            _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("*/*"));
-        }
-
-        /// <summary>
-        /// GET request with basic rate limiting.
-        /// </summary>
-        public async Task<string> GetStringAsync(string url, CancellationToken ct = default)
-        {
-            await EnforceRateLimitAsync(ct);
-
-            using var response = await _httpClient.GetAsync(url, ct);
-            response.EnsureSuccessStatusCode();
-
-            return await response.Content.ReadAsStringAsync(ct);
-        }
-
-        /// <summary>
-        /// GET request for binary content (HTML, etc.).
-        /// </summary>
-        public async Task<byte[]> GetBytesAsync(string url, CancellationToken ct = default)
-        {
-            await EnforceRateLimitAsync(ct);
-
-            using var response = await _httpClient.GetAsync(url, ct);
-            response.EnsureSuccessStatusCode();
-
-            return await response.Content.ReadAsByteArrayAsync(ct);
-        }
-
-        private async Task EnforceRateLimitAsync(CancellationToken ct)
-        {
-            if (_lastRequestTime != DateTime.MinValue)
+                _lastRequestUtc = DateTime.UtcNow;
+            }
+            finally
             {
-                var elapsed = DateTime.UtcNow - _lastRequestTime;
-                var remainingDelay = _delayMs - (int)elapsed.TotalMilliseconds;
-
-                if (remainingDelay > 0)
-                    await Task.Delay(remainingDelay, ct);
+                _gate.Release();
             }
 
-            _lastRequestTime = DateTime.UtcNow;
+            var response = await _httpClient.GetAsync(url, ct);
+            if ((int)response.StatusCode is 429 or 503)
+            {
+                var retryDelay = response.Headers.RetryAfter?.Delta ?? TimeSpan.FromSeconds(2 * (attempt + 1));
+                response.Dispose();
+                await Task.Delay(retryDelay, ct);
+                continue;
+            }
+
+            response.EnsureSuccessStatusCode();
+            return response;
         }
 
-        public void Dispose()
-        {
-            _httpClient.Dispose();
-        }
+        throw new HttpRequestException($"Failed after retries: {url}");
+    }
+
+    public void Dispose()
+    {
+        _gate.Dispose();
+        _httpClient.Dispose();
     }
 }

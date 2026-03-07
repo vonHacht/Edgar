@@ -1,100 +1,81 @@
-﻿using System.Collections.Concurrent;
+﻿using Edgar.Models;
 
-using Edgar.Config;
-using Edgar.Models;
-
-using MongoDB.Bson;
 using MongoDB.Driver;
 
 namespace Edgar.Database
 {
-    public sealed class MongoDb
+    public class MongoDB
     {
-        private static readonly ReplaceOptions UpsertOptions = new() { IsUpsert = true };
+        private readonly IMongoCollection<FirmYearRegressionPanelDocument> _collection;
 
-        private readonly IMongoDatabase _completeDb;
-        private readonly IMongoDatabase _uncompleteDb;
-
-        // Cache the two collections
-        private readonly ConcurrentDictionary<string, IMongoCollection<BsonDocument>> _collections = new();
-
-        // Preferred ctor: pass options in (easy to test)
-        public MongoDb(AppSettings options)
+        public MongoDB(string connectionString, string databaseName)
         {
-            ArgumentNullException.ThrowIfNull(options);
-
-            var client = new MongoClient(options.DefaultLocalHost);
-
-            _completeDb = client.GetDatabase(options.DefaultEdgarDbName);
-            _uncompleteDb = client.GetDatabase(options.DefaultEdgarLoggingDbName);
+            var client = new MongoClient(connectionString);
+            var database = client.GetDatabase(databaseName);
+            _collection = database.GetCollection<FirmYearRegressionPanelDocument>("FirmYearRegressionPanel");
         }
 
-        private IMongoCollection<BsonDocument> GetCollection(IMongoDatabase db, string collectionName)
+        public async Task SendFirmYearRegressionPanelDocument(
+            int year,
+            int permno,
+            Filing filing,
+            DictionaryScores scoresItem1A,
+            DictionaryScores scoreItem7,
+            ExtractedSections sections,
+            double returns,
+            double volatility,
+            List<BookToMarket> btm)
         {
-            // Cache per (dbName, collectionName)
-            var key = $"{db.DatabaseNamespace.DatabaseName}:{collectionName}";
-            return _collections.GetOrAdd(key, _ => db.GetCollection<BsonDocument>(collectionName));
-        }
+            if (btm == null || btm.Count == 0)
+                return;
 
-        public Task UpsertCompleteAsync(
-            DatabaseCompleteDocument doc,
-            string collection, // <-- keep signature, but interpret as YearKey
-            CancellationToken ct = default)
-        {
-            ArgumentNullException.ThrowIfNull(doc);
-            ValidateYearKey(collection);
+            BookToMarket bookToMarket = btm[0];
 
-            var yearKey = collection;
-
-            // Store yearKey inside the document without changing your model types
-            var bson = doc.ToBsonDocument();
-            bson["YearKey"] = yearKey;
-
-            var filter = Builders<BsonDocument>.Filter.And(
-                Builders<BsonDocument>.Filter.Eq("Cik", doc.Cik),
-                Builders<BsonDocument>.Filter.Eq("AccessionNumber", doc.AccessionNumber),
-                Builders<BsonDocument>.Filter.Eq("YearKey", yearKey)
+            var filter = Builders<FirmYearRegressionPanelDocument>.Filter.And(
+                Builders<FirmYearRegressionPanelDocument>.Filter.Eq(x => x.Permno, permno),
+                Builders<FirmYearRegressionPanelDocument>.Filter.Eq(x => x.FiscalYear, year)
             );
 
-            return GetCollection(_completeDb, yearKey)
-                .ReplaceOneAsync(filter, bson, UpsertOptions, ct);
-        }
+            var update = Builders<FirmYearRegressionPanelDocument>.Update
+                .Set(x => x.Cik, filing.CIK)
+                .Set(x => x.Gvkey, bookToMarket.Gvkey)
+                .Set(x => x.FilingDate, filing.DateFiled)
 
-        public Task UpsertUncompleteAsync(
-            DatabaseUncompleteDocument doc,
-            string collection, // <-- keep signature, but interpret as YearKey
-            CancellationToken ct = default)
-        {
-            ArgumentNullException.ThrowIfNull(doc);
-            ValidateYearKey(collection);
+                .Set(x => x.RiskTextDictionaryItem1A, scoresItem1A.RiskFrequency)
+                .Set(x => x.RiskTextLlmItem1A, 0.0)
+                .Set(x => x.RiskTextDictionaryItem7, scoreItem7.RiskFrequency)
+                .Set(x => x.RiskTextLlmItem7, 0.0)
 
-            var yearKey = collection;
+                .Set(x => x.Item1AWordCount, scoresItem1A.TotalWords)
+                .Set(x => x.Item7WordCount, scoreItem7.TotalWords)
 
-            var bson = doc.ToBsonDocument();
-            bson["YearKey"] = yearKey;
+                .Set(x => x.Size, bookToMarket.Size)
+                .Set(x => x.MarketEquity, bookToMarket.MarketCap)
+                .Set(x => x.BookEquity, bookToMarket.BookEquity)
+                .Set(x => x.BookToMarket, bookToMarket.BM)
 
-            var filter = Builders<BsonDocument>.Filter.And(
-                Builders<BsonDocument>.Filter.Eq("Cik", doc.Cik),
-                Builders<BsonDocument>.Filter.Eq("AccessionNumber", doc.AccessionNumber),
-                Builders<BsonDocument>.Filter.Eq("YearKey", yearKey)
-            );
+                .Set(x => x.Returns, returns)
+                .Set(x => x.Volatility, volatility)
 
-            return GetCollection(_uncompleteDb, yearKey)
-                .ReplaceOneAsync(filter, bson, UpsertOptions, ct);
-        }
+                .Set(x => x.Leverage, bookToMarket.Leverage)
+                .Set(x => x.TotalAssets, bookToMarket.TotalAssets)
 
-        private static void ValidateYearKey(string yearKey)
-        {
-            if (string.IsNullOrWhiteSpace(yearKey))
-                throw new ArgumentException("Year key is required.", nameof(yearKey));
+                .Set(x => x.LossProvisionsRawT1, bookToMarket.LossProvisionRaw)
+                .Set(x => x.LossProvisionsT1, bookToMarket.LossProvision)
 
-            // Optional: ensure it's a year like "2010"
-            if (yearKey.Length != 4 || !int.TryParse(yearKey, out _))
-                throw new ArgumentException("Year key must look like '2010'.", nameof(yearKey));
+                .Set(x => x.GdpGrowth, 0.0)
+                .Set(x => x.UnemploymentRate, 0.0)
+                .Set(x => x.InterestRate, 0.0)
 
-            if (yearKey.Contains('\0'))
-                throw new ArgumentException("Invalid year key.", nameof(yearKey));
+                .Set(x => x.TextModelVersion, "llm-risk-v1")
+
+                // ensure these exist if inserted
+                .SetOnInsert(x => x.Permno, permno)
+                .SetOnInsert(x => x.FiscalYear, year);
+
+            var options = new UpdateOptions { IsUpsert = true };
+
+            await _collection.UpdateOneAsync(filter, update, options);
         }
     }
 }
-

@@ -1,8 +1,12 @@
-﻿namespace Edgar.Models
+﻿using System;
+
+namespace Edgar.Models
 {
     public class BookToMarket
     {
         public DateTime Date { get; init; }
+
+        public string Gvkey { get; init; } // GVKEY
 
         public double CommonEquity { get; set; } // ceq
         public double ShareholdersEquity { get; set; } // seq
@@ -19,7 +23,19 @@
 
         public double TotalLiabilities { get; set; } // lt
 
+        public double MarketCap { get; set; } // mkvalt
+
+        public double SpecialItems { get; set; } // spi
+
+        public double LossProvision => _lossProvision();
+
+        public double Size => Math.Log(MarketCap);
+
         public double BookEquity { get { return _bookEquity(); } }
+
+        public double BM { get { return _bookToMarket(); } } // Book-to-market ratio
+
+        public double Leverage => _leverage();
 
         private double _bookEquity()
         {
@@ -58,6 +74,51 @@
 
             return baseEquity + deferred - preferred;
         }
+
+        private double _bookToMarket()
+        {
+            if (BookEquity > 0.0 && MarketCap > 0.0)
+            {
+                return BookEquity / MarketCap;
+            }
+            else
+            {
+                return 0.0; // or NaN, depending on how you want to handle this case
+            }
+        }
+
+        private double _leverage()
+        {
+            static bool Pos(double v) => !double.IsNaN(v) && v > 0.0;
+            static bool HasValue(double v) => !double.IsNaN(v);
+
+            if (Pos(TotalAssets) && HasValue(TotalLiabilities))
+            {
+                return TotalLiabilities / TotalAssets;
+            }
+
+            return double.NaN;
+        }
+
+        private double _lossProvision()
+        {
+            static bool Pos(double v) => !double.IsNaN(v) && v > 0.0;
+            static bool HasValue(double v) => !double.IsNaN(v);
+
+            if (HasValue(SpecialItems) && Pos(TotalAssets))
+            {
+                // Only capture losses (negative special items)
+                double loss = Math.Min(SpecialItems, 0.0);
+                return -loss / TotalAssets;
+            }
+
+            return double.NaN;
+        }
+
+        public double LossProvisionRaw =>
+            (double.IsNaN(SpecialItems) || TotalAssets <= 0)
+            ? double.NaN
+            : SpecialItems / TotalAssets;
     }
 }
 

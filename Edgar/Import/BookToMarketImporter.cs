@@ -16,6 +16,7 @@ namespace Edgar.Import
         // Column indices
         private int _lpermnoIdx, _cikIdx, _linkdtIdx, _linkenddtIdx, _gvkeyIdx, _datadateIdx, _fyearIdx;
         private int _ceqIdx, _seqIdx, _txditcIdx, _pstkrvIdx, _pstklIdx, _pstkIdx, _atIdx, _ltIdx;
+        private int _mkvaltIdx, _spiIdx;
 
         public BookToMarketImporter(AppSettings settings)
         {
@@ -82,6 +83,10 @@ namespace Edgar.Import
 
                     TotalAssets = ReadDoubleOrNaN(row, _atIdx),
                     TotalLiabilities = ReadDoubleOrNaN(row, _ltIdx),
+
+                    Gvkey = GetField(row, _gvkeyIdx) ?? string.Empty,
+                    MarketCap = ReadDoubleOrNaN(row, _mkvaltIdx),
+                    SpecialItems = ReadDoubleOrNaN(row, _spiIdx)
                 };
 
                 data.Add(year, cik, item);
@@ -122,6 +127,10 @@ namespace Edgar.Import
             _pstkIdx = IndexOf(header, "pstk");
             _atIdx = IndexOf(header, "at");
             _ltIdx = IndexOf(header, "lt");
+
+            _gvkeyIdx = IndexOf(header, "GVKEY");
+            _mkvaltIdx = IndexOf(header, "mkvalt");
+            _spiIdx = IndexOf(header, "spi");
 
             // Enforce only what you truly need for ReadAllBookToMarket
             if (_cikIdx < 0 || _datadateIdx < 0)

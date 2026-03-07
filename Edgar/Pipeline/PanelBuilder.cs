@@ -9,24 +9,30 @@ using Edgar.Import;
 using Edgar.Logging;
 using Edgar.Models;
 using Edgar.Parsing;
+using Edgar.TextMeasures;
+using Edgar.Database;
 
 using Microsoft.Extensions.Logging;
 
 namespace Edgar.Pipeline
 {
-    public class PipelineBuilder
+    public sealed class PanelBuilder : IDisposable
     {
-        private readonly ILogger<Program> _logger;
+        private readonly ILogger<PanelBuilder> _logger;
         private readonly AppSettings _appSettings;
 
-        private BookToMarketData _bookToMarketData = null!;
-        private CikPermnoMap _ccmData = null!;
-        private CrspData _crspData = null!;
+        private readonly BookToMarketData _bookToMarketData;
+        private readonly CikPermnoMap _ccmData;
+        private readonly CrspData _crspData;
 
-        private EdgarClient _edgarClient = null!;
-        private FilingIndexService _indexService = null!;
-        private FilingDownloader _downloader = null!;
+        private readonly EdgarClient _edgarClient;
+        private readonly FilingIndexService _indexService;
+        private readonly FilingDownloader _downloader;
         private readonly ItemSectionExtractor _extractor = new ItemSectionExtractor();
+
+        private readonly LmDictionaryScorer _dictionaryScorer;
+
+        private readonly Database.MongoDB _db = new Database.MongoDB();
 
         private static readonly int[] Years =
        {
@@ -36,43 +42,34 @@ namespace Edgar.Pipeline
             2020, 2021, 2022, 2023, 2024
         };
 
-        public PipelineBuilder(AppSettings appSettings)
+        public PanelBuilder(AppSettings appSettings)
         {
             _appSettings = appSettings;
-            _logger = EdgarLogger.CreateLogger<Program>(appSettings);
-        }
-
-        public void RunAsync()
-        {
-            LoadDataToMemory();
-            LoadEdgarClient();
-
-            foreach (var year in Years)
-                DownloadFilingsForYear(year).GetAwaiter().GetResult();
-        }
-
-        public void LoadDataToMemory()
-        {
-            _logger.LogInformation("----- LOADING CRSP, CCM & BOOKTOMARKET INTO MEMORY -----");
-
-            var sw = Stopwatch.StartNew();
+            _logger = EdgarLogger.CreateLogger<PanelBuilder>(appSettings);
 
             _bookToMarketData = new BookToMarketImporter(_appSettings).ReadAllBookToMarket();
             _ccmData = new CcmImporter(_appSettings).ReadAllYearsUniqueCcms();
             _crspData = new CrspImporter(_appSettings).ReadAllCrsp();
 
-            sw.Stop();
-            _logger.LogInformation("----- FINISHED IN {Seconds:F1}s -----", sw.Elapsed.TotalSeconds);
-        }
-
-        public void LoadEdgarClient()
-        {
             _edgarClient = new EdgarClient(_appSettings);
             _indexService = new FilingIndexService(_edgarClient);
             _downloader = new FilingDownloader(_edgarClient, _appSettings);
+
+            _dictionaryScorer = new LmDictionaryScorer(_appSettings.DictDir);
+
+            _db = new Database.MongoDB();
         }
 
-        public async Task DownloadFilingsForYear(int year)
+        public async Task RunAsync(CancellationToken ct = default)
+        {
+            foreach (var year in Years)
+            {
+                ct.ThrowIfCancellationRequested();
+                await ProcessFilingForYearAsync(year, ct);
+            }
+        }
+
+        private async Task ProcessFilingForYearAsync(int year, CancellationToken ct = default)
         {
             _logger.LogInformation("----- EDGAR PROCESS YEAR {Year} -----", year);
 
@@ -85,6 +82,9 @@ namespace Edgar.Pipeline
             for (var i = 0; i < filings.Count; i++)
             {
                 var filing = filings[i];
+                var permnos = GetPermnosOrWarn(filing);
+                var tradingDays = GetFirstTradingDaysOrWarn(year, filing, permnos);
+                var bookToMarkets = GetBookToMarketsOrWarn(year, filing);
 
                 using var scope = _logger.BeginScope(new Dictionary<string, object>
                 {
@@ -99,36 +99,55 @@ namespace Edgar.Pipeline
                 {
                     LogCik(filing.CIK, "Filing {Index}/{Total} for Year {Year} | Starting", i + 1, filings.Count, year);
 
-                    // --- Load dependent datasets for this filing
-                    var permnos = GetPermnosOrWarn(filing);
-                    var tradingDays = GetFirstTradingDaysOrWarn(year, filing, permnos);
-                    var bookToMarkets = GetBookToMarketsOrWarn(year, filing);
-
-                    // If required to proceed, skip when missing.
                     if (permnos.Count == 0 || tradingDays.Count == 0 || bookToMarkets.Count == 0)
                     {
                         LogCik(filing.CIK, "Skipping filing due to missing required data (CCM/CRSP/BTM).");
                         continue;
                     }
 
-                    if(!FilterFunctions.Filter60DaysBeforeAfter(permnos.First(), year, _crspData))
+                    var filter60Result = FilterFunctions.Filter60DaysBeforeAfter(permnos.First(), year, _crspData);
+
+                    if (filter60Result != "")
                     {
-                        LogCik(filing.CIK, "Skipping filing due to failing 60 days before/after filter.");
+                        LogCik(filing.CIK, filter60Result);
                         continue;
                     }
 
-                    // --- Download + extract sections
-                    var extractedSections = await ProcessFilingAsync(yearKey, filing);
+                    var extractedSections = await ProcessFilingAsync(yearKey, filing, ct);
 
-                    // TODO: Do something with extractedSections, tradingDays, bookToMarkets, etc.
-                    // If you save a file, add it:
-                    // savedPaths.Add(outputPath);
                     var filterPassed = FilterProcess.Passed(filing, extractedSections, tradingDays, bookToMarkets);
 
                     if (filterPassed != "") 
                     { 
                         LogCik(filing.CIK, filterPassed);
                     }
+
+                    var dictScores = _dictionaryScorer.Score(extractedSections.Item1AText);
+
+                    double? returns = CrspMeasures.ComputeBuyAndHoldReturn(
+                        _crspData,
+                        permnos.First(),
+                        filing.DateFiled,
+                        filing.DateFiled.AddYears(1));
+
+                    double? volatility = CrspMeasures.ComputeVolatility(
+                        _crspData,
+                        permnos.First(),
+                        filing.DateFiled,
+                        filing.DateFiled.AddYears(1),
+                        annualize: true);
+
+                    await _db.SendFirmYearRegressionPanelDocument(
+                        year,
+                        permnos.First(),
+                        filing,
+                        dictScores,
+                        new DictionaryScores(), // Placeholder for Item 7
+                        extractedSections,
+                        new LossProvision(), // Placeholder for loss provisions
+                        returns ?? 0.0,
+                        volatility ?? 0.0,
+                        bookToMarkets);
 
                     LogCik(filing.CIK, "Filing {Index}/{Total} for Year {Year} | Finished", i + 1, filings.Count, year);
                 }
@@ -197,7 +216,7 @@ namespace Edgar.Pipeline
             return bookToMarkets;
         }
 
-        private async Task<ExtractedSections> ProcessFilingAsync(string yearKey, Filing filing)
+        private async Task<ExtractedSections> ProcessFilingAsync(string yearKey, Filing filing, CancellationToken ct)
         {
             LogCik(filing.CIK, "Downloading filing HTML (cached if available)");
 
@@ -232,6 +251,11 @@ namespace Edgar.Pipeline
             all[0] = cik;
             Array.Copy(args, 0, all, 1, args.Length);
             return all;
+        }
+
+        public void Dispose()
+        {
+            _edgarClient.Dispose();
         }
     }
 }
