@@ -32,7 +32,7 @@ namespace Edgar.Pipeline
 
         private readonly LmDictionaryScorer _dictionaryScorer;
 
-        private readonly Database.MongoDB _db = new Database.MongoDB();
+        private readonly Database.MongoDB _db;
 
         private static readonly int[] Years =
        {
@@ -57,19 +57,19 @@ namespace Edgar.Pipeline
 
             _dictionaryScorer = new LmDictionaryScorer(_appSettings.DictDir);
 
-            _db = new Database.MongoDB();
+            _db = new Database.MongoDB(_appSettings.DefaultLocalHost, _appSettings.DefaultEdgarDbName);
         }
 
-        public async Task RunAsync(CancellationToken ct = default)
+        public async Task RunAsync(string? cik = null, CancellationToken ct = default)
         {
             foreach (var year in Years)
             {
                 ct.ThrowIfCancellationRequested();
-                await ProcessFilingForYearAsync(year, ct);
+                await ProcessFilingForYearAsync(year, ct, cik);
             }
         }
 
-        private async Task ProcessFilingForYearAsync(int year, CancellationToken ct = default)
+        private async Task ProcessFilingForYearAsync(int year, CancellationToken ct = default, string? cik=null)
         {
             _logger.LogInformation("----- EDGAR PROCESS YEAR {Year} -----", year);
 
@@ -82,6 +82,12 @@ namespace Edgar.Pipeline
             for (var i = 0; i < filings.Count; i++)
             {
                 var filing = filings[i];
+
+                if (cik != null && filing.CIK != cik)
+                {
+                    continue;
+                }
+
                 var permnos = GetPermnosOrWarn(filing);
                 var tradingDays = GetFirstTradingDaysOrWarn(year, filing, permnos);
                 var bookToMarkets = GetBookToMarketsOrWarn(year, filing);
@@ -144,7 +150,6 @@ namespace Edgar.Pipeline
                         dictScores,
                         new DictionaryScores(), // Placeholder for Item 7
                         extractedSections,
-                        new LossProvision(), // Placeholder for loss provisions
                         returns ?? 0.0,
                         volatility ?? 0.0,
                         bookToMarkets);

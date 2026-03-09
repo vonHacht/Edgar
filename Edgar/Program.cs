@@ -1,10 +1,13 @@
-﻿using Edgar.Pipeline;
+﻿using Edgar.Config;
+using Edgar.Pipeline;
 
 public class Program
 {
     public static async Task Main(string[] args)
     {
-        //var pipeline = new PanelBuilder();
-        //await pipeline.RunAsync();
+        AppSettings settings = AppSettings.Load();
+
+        var pipeline = new PanelBuilder(settings);
+        await pipeline.RunAsync();
     }
 }

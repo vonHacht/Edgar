@@ -1,4 +1,6 @@
-﻿namespace Edgar.Config
+﻿using DotNetEnv;
+
+namespace Edgar.Config
 {
     public class AppSettings
     {
@@ -18,6 +20,7 @@
         // ----------------------------
         public string RiskPanelFilename { get; init; }
         public string CikMatchesFilename { get; init; }
+
         public string LogFilename
         {
             get
@@ -45,27 +48,26 @@
 
         public bool LogToConsole { get; set; } = true;
         public bool LogToFile { get; set; } = true;
-        public string LogLevel { get; set; } = "Verbose"; // Verbose, Debug, Information...
+        public string LogLevel { get; set; } = "Verbose";
 
         // ----------------------------
         // Database options
         // ----------------------------
-        public string DefaultLocalHost { get; init; } = "mongodb://localhost:27017";
-        public string DefaultEdgarDbName { get; init; } = "edgar";
-        public string DefaultEdgarLoggingDbName { get; init; } = "edgarLogging";
-        public string DefaultEdgarMarketEquityDbName { get; init; } = "edgarMarketEquity";
+        public string DefaultLocalHost { get; init; } = "";
+        public string DefaultEdgarDbName { get; init; } = "";
 
-        // ✅ Production-friendly entry point
         public static AppSettings Load()
         {
             var projectRoot = ResolveProjectRootFromBaseDirectory();
             return Load(projectRoot);
         }
 
-        // ✅ Test-friendly / explicit entry point
         public static AppSettings Load(string projectRoot)
         {
             projectRoot = Path.GetFullPath(projectRoot);
+
+            LoadEnvFile(projectRoot);
+
             var dataDir = Path.Combine(projectRoot, "Data");
             var outputDir = Path.Combine(projectRoot, "Output");
             var companiesDir = Path.Combine(dataDir, "companies");
@@ -79,30 +81,54 @@
                 DictDir = Path.Combine(dataDir, "dictionaries"),
                 OutputDir = outputDir,
                 CompaniesDir = companiesDir,
+
                 RiskPanelFilename = Path.Combine(outputDir, "risk_panel.csv"),
                 CikMatchesFilename = Path.Combine(outputDir, "cik_matches.csv"),
                 _logFilenameWithoutTimestamp = Path.Combine(outputDir, "edgar"),
+
                 BookToMarketFilename = Path.Combine(companiesDir, "booktomarket.csv"),
                 CcmFilename = Path.Combine(companiesDir, "ccm.csv"),
                 CrspFilename = Path.Combine(companiesDir, "crsp.csv"),
 
-                UserAgent = "Edgar/1.0 (contact: your.email@university.edu)"
+                UserAgent = "Edgar/1.0 (contact: your.email@university.edu)",
+
+                DefaultLocalHost = GetRequiredEnvironmentVariable("DEFAULT_LOCAL_HOST"),
+                DefaultEdgarDbName = GetRequiredEnvironmentVariable("DEFAULT_EDGAR_DB_NAME")
             };
 
             settings.EnsureDirectories();
             settings.EnsureFiles();
+
             return settings;
+        }
+
+        private static void LoadEnvFile(string projectRoot)
+        {
+            var envPath = Path.Combine(projectRoot, ".env");
+
+            if (File.Exists(envPath))
+            {
+                Env.Load(envPath);
+            }
+        }
+
+        private static string GetRequiredEnvironmentVariable(string key)
+        {
+            var value = Environment.GetEnvironmentVariable(key);
+
+            if (string.IsNullOrWhiteSpace(value))
+                throw new InvalidOperationException($"Missing required environment variable: {key}");
+
+            return value;
         }
 
         private static string ResolveProjectRootFromBaseDirectory()
         {
 #if DEBUG
-            // bin/Debug/netX.Y → project root
             return Path.GetFullPath(
                 Path.Combine(AppContext.BaseDirectory, "..", "..", "..")
             );
 #else
-            // In Release, use where the program is executed from
             return Directory.GetCurrentDirectory();
 #endif
         }
@@ -129,7 +155,5 @@
             if (!File.Exists(path))
                 throw new FileNotFoundException($"Required file not found: {path}", path);
         }
-
     }
 }
-

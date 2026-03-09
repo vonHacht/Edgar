@@ -28,8 +28,17 @@ public sealed class EdgarClient : IDisposable
 
     public async Task<string> GetStringAsync(string url, CancellationToken ct = default)
     {
-        using var response = await SendWithRateLimitAsync(url, ct);
-        return await response.Content.ReadAsStringAsync(ct);
+        try
+        {
+            using var response = await SendWithRateLimitAsync(url, ct);
+            response.EnsureSuccessStatusCode();
+
+            return await response.Content.ReadAsStringAsync(ct);
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"Failed to GET '{url}'", ex);
+        }
     }
 
     public async Task<byte[]> GetBytesAsync(string url, CancellationToken ct = default)
@@ -47,6 +56,7 @@ public sealed class EdgarClient : IDisposable
             {
                 var elapsed = DateTime.UtcNow - _lastRequestUtc;
                 var remaining = _delayMs - (int)elapsed.TotalMilliseconds;
+
                 if (remaining > 0)
                     await Task.Delay(remaining, ct);
 
@@ -57,7 +67,20 @@ public sealed class EdgarClient : IDisposable
                 _gate.Release();
             }
 
-            var response = await _httpClient.GetAsync(url, ct);
+            HttpResponseMessage response;
+            try
+            {
+                response = await _httpClient.GetAsync(url, ct);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                throw new HttpRequestException($"Request failed for {url}", ex);
+            }
+
             if ((int)response.StatusCode is 429 or 503)
             {
                 var retryDelay = response.Headers.RetryAfter?.Delta ?? TimeSpan.FromSeconds(2 * (attempt + 1));

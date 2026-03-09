@@ -24,6 +24,9 @@ namespace Edgar.Filter
                     .Take(60)
                     .ToList();
 
+                if (daysBefore.Count < 60 || daysAfter.Count < 60)
+                    return "Not enough days before or after";
+
                 for (int i = 0; i < 60; i++)
                 {
                     if (daysBefore[i].Ret == null || daysBefore[i].Volume == null)

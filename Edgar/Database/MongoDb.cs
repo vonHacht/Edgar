@@ -6,13 +6,12 @@ namespace Edgar.Database
 {
     public class MongoDB
     {
-        private readonly IMongoCollection<FirmYearRegressionPanelDocument> _collection;
+        private readonly IMongoDatabase _database;
 
         public MongoDB(string connectionString, string databaseName)
         {
             var client = new MongoClient(connectionString);
-            var database = client.GetDatabase(databaseName);
-            _collection = database.GetCollection<FirmYearRegressionPanelDocument>("FirmYearRegressionPanel");
+            _database = client.GetDatabase(databaseName);
         }
 
         public async Task SendFirmYearRegressionPanelDocument(
@@ -75,7 +74,7 @@ namespace Edgar.Database
 
             var options = new UpdateOptions { IsUpsert = true };
 
-            await _collection.UpdateOneAsync(filter, update, options);
+            await _database.GetCollection<FirmYearRegressionPanelDocument>(year.ToString()).UpdateOneAsync(filter, update, options);
         }
     }
 }
