@@ -7,37 +7,33 @@ namespace Edgar.Config
         // ----------------------------
         // Project paths
         // ----------------------------
-        public string ProjectRoot { get; init; }
-        public string DataDir { get; init; }
-        public string RawDir { get; init; }
-        public string ProcessedDir { get; init; }
-        public string DictDir { get; init; }
-        public string OutputDir { get; init; }
-        public string CompaniesDir { get; init; }
+        public required string ProjectRoot { get; init; }
+        public required string DataDir { get; init; }
+        public required string RawDir { get; init; }
+        public required string ProcessedDir { get; init; }
+        public required string DictDir { get; init; }
+        public required string OutputDir { get; init; }
+        public required string CompaniesDir { get; init; }
 
         // ----------------------------
         // File paths
         // ----------------------------
-        public string RiskPanelFilename { get; init; }
-        public string CikMatchesFilename { get; init; }
+        public required string RiskPanelFilename { get; init; }
+        public required string CikMatchesFilename { get; init; }
 
-        public string LogFilename
-        {
-            get
-            {
-                return _logFilenameWithoutTimestamp + "_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".log";
-            }
-        }
+        public string LogFilename =>
+                    $"{_logFilenameWithoutTimestamp}_{DateTime.Now:yyyyMMdd_HHmmss}.log";
 
-        private string _logFilenameWithoutTimestamp;
-        public string BookToMarketFilename { get; init; }
-        public string CcmFilename { get; init; }
-        public string CrspFilename { get; init; }
+        private string _logFilenameWithoutTimestamp = String.Empty;
+        public required string BookToMarketFilename { get; init; }
+        public required string CcmFilename { get; init; }
+        public required string CrspFilename { get; init; }
+        public required string LoughranMcDonaldMasterDictionaryFilename { get; init; }
 
         // ----------------------------
         // SEC / EDGAR settings
         // ----------------------------
-        public string UserAgent { get; init; }
+        public required string UserAgent { get; init; }
         public int RequestDelayMs { get; init; } = 200;
 
         // ----------------------------
@@ -71,6 +67,7 @@ namespace Edgar.Config
             var dataDir = Path.Combine(projectRoot, "Data");
             var outputDir = Path.Combine(projectRoot, "Output");
             var companiesDir = Path.Combine(dataDir, "companies");
+            var dictDir = Path.Combine(dataDir, "dictionaries");
 
             var settings = new AppSettings
             {
@@ -78,12 +75,13 @@ namespace Edgar.Config
                 DataDir = dataDir,
                 RawDir = Path.Combine(dataDir, "raw"),
                 ProcessedDir = Path.Combine(dataDir, "processed"),
-                DictDir = Path.Combine(dataDir, "dictionaries"),
+                DictDir = dictDir,
                 OutputDir = outputDir,
                 CompaniesDir = companiesDir,
 
                 RiskPanelFilename = Path.Combine(outputDir, "risk_panel.csv"),
                 CikMatchesFilename = Path.Combine(outputDir, "cik_matches.csv"),
+                LoughranMcDonaldMasterDictionaryFilename = Path.Combine(dictDir, "Loughran-McDonald_MasterDictionary_1993-2024.csv"),
                 _logFilenameWithoutTimestamp = Path.Combine(outputDir, "edgar"),
 
                 BookToMarketFilename = Path.Combine(companiesDir, "booktomarket.csv"),

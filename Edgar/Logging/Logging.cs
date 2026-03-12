@@ -12,18 +12,16 @@ namespace Edgar.Logging
         private static ILoggerFactory? _loggerFactory;
         private static readonly object _lock = new();
 
-        private static AppSettings? _settings;
-
-        public static ILogger<T> CreateLogger<T>(AppSettings? settings = null)
+        public static ILogger<T> CreateLogger<T>(AppSettings settings)
         {
-            _settings = settings == null ? AppSettings.Load() : settings;
+            ArgumentNullException.ThrowIfNull(settings);
 
-            EnsureInitialized();
+            EnsureInitialized(settings);
 
             return _loggerFactory!.CreateLogger<T>();
         }
 
-        private static void EnsureInitialized()
+        private static void EnsureInitialized(AppSettings settings)
         {
             if (_loggerFactory != null)
                 return;
@@ -33,9 +31,9 @@ namespace Edgar.Logging
                 if (_loggerFactory != null)
                     return;
 
-                Directory.CreateDirectory(_settings.OutputDir);
+                Directory.CreateDirectory(settings.OutputDir);
 
-                var level = ParseLevel(_settings.LogLevel);
+                var level = ParseLevel(settings.LogLevel);
 
                 var config = new LoggerConfiguration()
                     .MinimumLevel.Is(level)
@@ -43,7 +41,7 @@ namespace Edgar.Logging
                     .MinimumLevel.Override("System", LogEventLevel.Warning)
                     .Enrich.FromLogContext();
 
-                if (_settings.LogToConsole)
+                if (settings.LogToConsole)
                 {
                     config = config.WriteTo.Console(
                         outputTemplate:
@@ -51,10 +49,10 @@ namespace Edgar.Logging
                     );
                 }
 
-                if (_settings.LogToFile)
+                if (settings.LogToFile)
                 {
                     config = config.WriteTo.File(
-                        _settings.LogFilename,
+                        settings.LogFilename,
                         rollingInterval: RollingInterval.Infinite,
                         retainedFileCountLimit: 7,
                         outputTemplate:

@@ -1,12 +1,10 @@
-﻿using System;
-
-namespace Edgar.Models
+﻿namespace Edgar.Models
 {
     public class BookToMarket
     {
         public DateTime Date { get; init; }
 
-        public string Gvkey { get; init; } // GVKEY
+        public required string Gvkey { get; init; } // GVKEY
 
         public double CommonEquity { get; set; } // ceq
         public double ShareholdersEquity { get; set; } // seq
@@ -27,6 +25,8 @@ namespace Edgar.Models
 
         public double SpecialItems { get; set; } // spi
 
+        public double NetIncome { get; set; } // ni
+
         public double LossProvision => _lossProvision();
 
         public double Size => Math.Log(MarketCap);
@@ -39,7 +39,7 @@ namespace Edgar.Models
 
         private double _bookEquity()
         {
-            static bool IsMissing(double v) => double.IsNaN(v);
+            // static bool IsMissing(double v) => double.IsNaN(v);
             static bool HasValue(double v) => !double.IsNaN(v);
             static bool Pos(double v) => !double.IsNaN(v) && v > 0.0;
 

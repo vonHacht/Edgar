@@ -1,0 +1,4 @@
+GVKEY,LINKPRIM,LIID,LINKTYPE,LPERMNO,LPERMCO,LINKDT,LINKENDDT,iid,datadate,tic,cusip,
+conm,curcddv,capgn,cheqv,div,divd,divdpaydateind,divsp,dvrated,paydateind,anncdate,
+capgnpaydate,cheqvpaydate,divdpaydate,divsppaydate,paydate,recorddate,curcdd,adrrc,ajexdi,cshoc,
+cshtrd,dvi,eps,epsmo,prccd,prchd,prcld,prcod,prcstd,trfd,exchg,secstat,cik,fic,conml,costat,fyrc,weburl

@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-using Edgar.Companies;
-using Edgar.Config;
+﻿using Edgar.Config;
 using Edgar.Pipeline;
 
 namespace TestEdgar
@@ -17,9 +12,9 @@ namespace TestEdgar
 
             PanelBuilder panelBuilder = new PanelBuilder(settings);
 
-            string testCik = "0001175535";
+            // string testCik = "0001175535";
 
-            var result = panelBuilder.RunAsync(testCik);
+            var result = panelBuilder.RunAsync();
 
             Console.WriteLine(result);
         }

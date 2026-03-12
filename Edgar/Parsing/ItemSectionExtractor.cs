@@ -50,13 +50,17 @@ namespace Edgar.Parsing
                 {
                     FoundItem1A = false,
                     FoundItem7 = false,
-                    ExtractionMethodVersion = "v1"
+                    ExtractionMethodVersion = "v1",
+                    Item1AText = string.Empty,
+                    Item7Text = string.Empty,
                 };
             }
 
             var result = new ExtractedSections
             {
-                ExtractionMethodVersion = "v1"
+                ExtractionMethodVersion = "v1",
+                Item1AText = String.Empty,
+                Item7Text = String.Empty,
             };
 
             // ITEM 1A

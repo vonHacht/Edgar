@@ -6,7 +6,7 @@
     /// </summary>
     public class LmDictionaries
     {
-        public HashSet<string> Risk { get; init; } = new(StringComparer.OrdinalIgnoreCase);
+        public HashSet<string> Positive { get; init; } = new(StringComparer.OrdinalIgnoreCase);
         public HashSet<string> Negative { get; init; } = new(StringComparer.OrdinalIgnoreCase);
         public HashSet<string> Uncertainty { get; init; } = new(StringComparer.OrdinalIgnoreCase);
     }

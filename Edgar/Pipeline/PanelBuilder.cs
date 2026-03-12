@@ -10,7 +10,6 @@ using Edgar.Logging;
 using Edgar.Models;
 using Edgar.Parsing;
 using Edgar.TextMeasures;
-using Edgar.Database;
 
 using Microsoft.Extensions.Logging;
 
@@ -36,7 +35,7 @@ namespace Edgar.Pipeline
 
         private static readonly int[] Years =
        {
-            2009, 
+            2009,
             2010, 2011, 2012, 2013, 2014,
             2015, 2016, 2017, 2018, 2019,
             2020, 2021, 2022, 2023, 2024
@@ -44,7 +43,7 @@ namespace Edgar.Pipeline
 
         public PanelBuilder(AppSettings appSettings)
         {
-            _appSettings = appSettings;
+            _appSettings = appSettings ?? throw new ArgumentNullException(nameof(appSettings));
             _logger = EdgarLogger.CreateLogger<PanelBuilder>(appSettings);
 
             _bookToMarketData = new BookToMarketImporter(_appSettings).ReadAllBookToMarket();
@@ -55,21 +54,21 @@ namespace Edgar.Pipeline
             _indexService = new FilingIndexService(_edgarClient);
             _downloader = new FilingDownloader(_edgarClient, _appSettings);
 
-            _dictionaryScorer = new LmDictionaryScorer(_appSettings.DictDir);
+            _dictionaryScorer = new LmDictionaryScorer(_appSettings);
 
             _db = new Database.MongoDB(_appSettings.DefaultLocalHost, _appSettings.DefaultEdgarDbName);
         }
 
-        public async Task RunAsync(string? cik = null, CancellationToken ct = default)
+        public async Task RunAsync(CancellationToken ct = default)
         {
             foreach (var year in Years)
             {
                 ct.ThrowIfCancellationRequested();
-                await ProcessFilingForYearAsync(year, ct, cik);
+                await ProcessFilingForYearAsync(year, ct);
             }
         }
 
-        private async Task ProcessFilingForYearAsync(int year, CancellationToken ct = default, string? cik=null)
+        private async Task ProcessFilingForYearAsync(int year, CancellationToken ct = default)
         {
             _logger.LogInformation("----- EDGAR PROCESS YEAR {Year} -----", year);
 
@@ -82,11 +81,6 @@ namespace Edgar.Pipeline
             for (var i = 0; i < filings.Count; i++)
             {
                 var filing = filings[i];
-
-                if (cik != null && filing.CIK != cik)
-                {
-                    continue;
-                }
 
                 var permnos = GetPermnosOrWarn(filing);
                 var tradingDays = GetFirstTradingDaysOrWarn(year, filing, permnos);
@@ -119,16 +113,14 @@ namespace Edgar.Pipeline
                         continue;
                     }
 
-                    var extractedSections = await ProcessFilingAsync(yearKey, filing, ct);
+                    ExtractedSections extractedSections = await ProcessFilingAsync(yearKey, filing, ct);
 
                     var filterPassed = FilterProcess.Passed(filing, extractedSections, tradingDays, bookToMarkets);
 
-                    if (filterPassed != "") 
-                    { 
+                    if (filterPassed != "")
+                    {
                         LogCik(filing.CIK, filterPassed);
                     }
-
-                    var dictScores = _dictionaryScorer.Score(extractedSections.Item1AText);
 
                     double? returns = CrspMeasures.ComputeBuyAndHoldReturn(
                         _crspData,
@@ -147,9 +139,8 @@ namespace Edgar.Pipeline
                         year,
                         permnos.First(),
                         filing,
-                        dictScores,
-                        new DictionaryScores(), // Placeholder for Item 7
-                        extractedSections,
+                        _dictionaryScorer.Score(extractedSections.Item1AText),
+                        _dictionaryScorer.Score(extractedSections.Item7Text),
                         returns ?? 0.0,
                         volatility ?? 0.0,
                         bookToMarkets);
@@ -178,8 +169,8 @@ namespace Edgar.Pipeline
             {
                 LogCik(
                     filing.CIK,
-                    "Missing permno mapping in CCM for Company {Company} ({CIK}).",
-                    filing.CompanyName, filing.CIK);
+                    "Missing permno mapping in CCM for Company {Company}.",
+                    filing.CompanyName);
             }
 
             return permnos;
@@ -199,8 +190,8 @@ namespace Edgar.Pipeline
             {
                 LogCik(
                     filing.CIK,
-                    "Missing CRSP trading days for Company {Company} ({CIK}) in {Year}.",
-                    filing.CompanyName, filing.CIK, year);
+                    "Missing CRSP trading days for Company {Company} in {Year}.",
+                    filing.CompanyName, year);
             }
 
             return tradingDays;
@@ -214,8 +205,8 @@ namespace Edgar.Pipeline
             {
                 LogCik(
                     filing.CIK,
-                    "Missing Book-to-Market data for Company {Company} ({CIK}) in {Year}.",
-                    filing.CompanyName, filing.CIK, year);
+                    "Missing Book-to-Market data for Company {Company} in {Year}.",
+                    filing.CompanyName, year);
             }
 
             return bookToMarkets;

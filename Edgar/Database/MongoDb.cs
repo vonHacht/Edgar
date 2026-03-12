@@ -20,7 +20,6 @@ namespace Edgar.Database
             Filing filing,
             DictionaryScores scoresItem1A,
             DictionaryScores scoreItem7,
-            ExtractedSections sections,
             double returns,
             double volatility,
             List<BookToMarket> btm)
@@ -32,7 +31,8 @@ namespace Edgar.Database
 
             var filter = Builders<FirmYearRegressionPanelDocument>.Filter.And(
                 Builders<FirmYearRegressionPanelDocument>.Filter.Eq(x => x.Permno, permno),
-                Builders<FirmYearRegressionPanelDocument>.Filter.Eq(x => x.FiscalYear, year)
+                Builders<FirmYearRegressionPanelDocument>.Filter.Eq(x => x.Cik, filing.CIK),
+                Builders<FirmYearRegressionPanelDocument>.Filter.Eq(x => x.Gvkey, bookToMarket.Gvkey)
             );
 
             var update = Builders<FirmYearRegressionPanelDocument>.Update
@@ -40,13 +40,8 @@ namespace Edgar.Database
                 .Set(x => x.Gvkey, bookToMarket.Gvkey)
                 .Set(x => x.FilingDate, filing.DateFiled)
 
-                .Set(x => x.RiskTextDictionaryItem1A, scoresItem1A.RiskFrequency)
-                .Set(x => x.RiskTextLlmItem1A, 0.0)
-                .Set(x => x.RiskTextDictionaryItem7, scoreItem7.RiskFrequency)
-                .Set(x => x.RiskTextLlmItem7, 0.0)
-
-                .Set(x => x.Item1AWordCount, scoresItem1A.TotalWords)
-                .Set(x => x.Item7WordCount, scoreItem7.TotalWords)
+                .Set(x => x.ScoresItem1A, scoresItem1A)
+                .Set(x => x.ScoresItem7, scoreItem7)
 
                 .Set(x => x.Size, bookToMarket.Size)
                 .Set(x => x.MarketEquity, bookToMarket.MarketCap)
@@ -62,15 +57,9 @@ namespace Edgar.Database
                 .Set(x => x.LossProvisionsRawT1, bookToMarket.LossProvisionRaw)
                 .Set(x => x.LossProvisionsT1, bookToMarket.LossProvision)
 
-                .Set(x => x.GdpGrowth, 0.0)
-                .Set(x => x.UnemploymentRate, 0.0)
-                .Set(x => x.InterestRate, 0.0)
+                .Set(x => x.NetIncome, bookToMarket.NetIncome)
 
-                .Set(x => x.TextModelVersion, "llm-risk-v1")
-
-                // ensure these exist if inserted
-                .SetOnInsert(x => x.Permno, permno)
-                .SetOnInsert(x => x.FiscalYear, year);
+                .Set(x => x.TextModelVersion, "llm-risk-v1");
 
             var options = new UpdateOptions { IsUpsert = true };
 

@@ -2,8 +2,8 @@
 {
     public class ExtractedSections
     {
-        public string Item1AText { get; set; } = string.Empty;
-        public string? Item7Text { get; set; }
+        public required string Item1AText { get; set; }
+        public required string Item7Text { get; set; }
 
         public bool FoundItem1A { get; set; }
         public bool FoundItem7 { get; set; }
