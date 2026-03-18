@@ -33,8 +33,10 @@ namespace Edgar.Config
         // ----------------------------
         // SEC / EDGAR settings
         // ----------------------------
-        public required string UserAgent { get; init; }
-        public int RequestDelayMs { get; init; } = 200;
+        public string UserAgent { get; init; } =
+            "MyEdgarClient/1.0 (your-email@domain.com)";
+        public int RequestDelayMs { get; init; } = 1000;   // ~1 request/sec
+        public int RequestTimeoutSeconds { get; init; } = 120;  // EDGAR can be slow
 
         // ----------------------------
         // Extraction options
@@ -87,8 +89,6 @@ namespace Edgar.Config
                 BookToMarketFilename = Path.Combine(companiesDir, "booktomarket.csv"),
                 CcmFilename = Path.Combine(companiesDir, "ccm.csv"),
                 CrspFilename = Path.Combine(companiesDir, "crsp.csv"),
-
-                UserAgent = "Edgar/1.0 (contact: your.email@university.edu)",
 
                 DefaultLocalHost = GetRequiredEnvironmentVariable("DEFAULT_LOCAL_HOST"),
                 DefaultEdgarDbName = GetRequiredEnvironmentVariable("DEFAULT_EDGAR_DB_NAME")

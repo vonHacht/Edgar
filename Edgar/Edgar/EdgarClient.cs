@@ -1,23 +1,33 @@
 ﻿using Edgar.Config;
 
+using System.Net;
+
 public sealed class EdgarClient : IDisposable
 {
     private readonly HttpClient _httpClient;
     private readonly int _delayMs;
+    private readonly TimeSpan _requestTimeout;
     private readonly SemaphoreSlim _gate = new(1, 1);
     private DateTime _lastRequestUtc = DateTime.MinValue;
 
     public EdgarClient(AppSettings settings)
     {
         _delayMs = settings.RequestDelayMs;
+        _requestTimeout = TimeSpan.FromSeconds(settings.RequestTimeoutSeconds);
+
         _httpClient = new HttpClient(new SocketsHttpHandler
         {
             AutomaticDecompression =
-                System.Net.DecompressionMethods.GZip |
-                System.Net.DecompressionMethods.Deflate
+                DecompressionMethods.GZip |
+                DecompressionMethods.Deflate,
+
+            ConnectTimeout = TimeSpan.FromSeconds(15),
+            PooledConnectionLifetime = TimeSpan.FromMinutes(10),
+            PooledConnectionIdleTimeout = TimeSpan.FromMinutes(2),
+            MaxConnectionsPerServer = 2
         })
         {
-            Timeout = TimeSpan.FromSeconds(60)
+            Timeout = Timeout.InfiniteTimeSpan
         };
 
         _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd(settings.UserAgent);
@@ -28,17 +38,8 @@ public sealed class EdgarClient : IDisposable
 
     public async Task<string> GetStringAsync(string url, CancellationToken ct = default)
     {
-        try
-        {
-            using var response = await SendWithRateLimitAsync(url, ct);
-            response.EnsureSuccessStatusCode();
-
-            return await response.Content.ReadAsStringAsync(ct);
-        }
-        catch (Exception ex)
-        {
-            throw new InvalidOperationException($"Failed to GET '{url}'", ex);
-        }
+        using var response = await SendWithRateLimitAsync(url, ct);
+        return await response.Content.ReadAsStringAsync(ct);
     }
 
     public async Task<byte[]> GetBytesAsync(string url, CancellationToken ct = default)
@@ -49,7 +50,7 @@ public sealed class EdgarClient : IDisposable
 
     private async Task<HttpResponseMessage> SendWithRateLimitAsync(string url, CancellationToken ct)
     {
-        for (var attempt = 0; attempt < 3; attempt++)
+        for (var attempt = 0; attempt < 5; attempt++)
         {
             await _gate.WaitAsync(ct);
             try
@@ -67,24 +68,39 @@ public sealed class EdgarClient : IDisposable
                 _gate.Release();
             }
 
+            using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            timeoutCts.CancelAfter(_requestTimeout);
+
             HttpResponseMessage response;
             try
             {
-                response = await _httpClient.GetAsync(url, ct);
+                response = await _httpClient.GetAsync(
+                    url,
+                    HttpCompletionOption.ResponseHeadersRead,
+                    timeoutCts.Token);
             }
-            catch (OperationCanceledException)
+            catch (OperationCanceledException) when (!ct.IsCancellationRequested)
             {
-                throw;
+                if (attempt == 4)
+                    throw new TimeoutException($"Request timed out after {_requestTimeout} for {url}");
+
+                await Task.Delay(GetBackoff(attempt), ct);
+                continue;
             }
-            catch (Exception ex)
+            catch (HttpRequestException) when (attempt < 4)
             {
-                throw new HttpRequestException($"Request failed for {url}", ex);
+                await Task.Delay(GetBackoff(attempt), ct);
+                continue;
             }
 
-            if ((int)response.StatusCode is 429 or 503)
+            if ((int)response.StatusCode is 408 or 429 or 500 or 502 or 503 or 504)
             {
-                var retryDelay = response.Headers.RetryAfter?.Delta ?? TimeSpan.FromSeconds(2 * (attempt + 1));
+                var retryDelay = response.Headers.RetryAfter?.Delta ?? GetBackoff(attempt);
                 response.Dispose();
+
+                if (attempt == 4)
+                    throw new HttpRequestException($"Failed after retries: {url}");
+
                 await Task.Delay(retryDelay, ct);
                 continue;
             }
@@ -94,6 +110,12 @@ public sealed class EdgarClient : IDisposable
         }
 
         throw new HttpRequestException($"Failed after retries: {url}");
+    }
+
+    private static TimeSpan GetBackoff(int attempt)
+    {
+        var seconds = Math.Min(Math.Pow(2, attempt + 1), 30);
+        return TimeSpan.FromSeconds(seconds);
     }
 
     public void Dispose()
