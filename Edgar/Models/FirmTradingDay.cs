@@ -4,6 +4,7 @@
     {
         // Keys
         public DateTime Date { get; init; }
+        public int Permno { get; init; }
 
         // Prices (CRSP: PRC can be negative = midpoint; store raw + normalized)
         public decimal? ClosePrcRaw { get; init; }     // CRSP PRC as-is
@@ -32,6 +33,8 @@
         public double? DelistPrice { get; init; }     // DLPRC
 
         public ExchangeCodes ExchangeCodes { get; init; } // EXCHCD
+
+        public int? ShareCode { get; init; } // shrcd
 
         // --- Market Cap ---
         public decimal? MarketCap =>

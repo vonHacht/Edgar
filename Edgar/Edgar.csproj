@@ -23,6 +23,7 @@
     <Folder Include="Data\dictionaries\" />
     <Folder Include="Data\processed\" />
     <Folder Include="Data\raw\" />
+    <Folder Include="output\" />
   </ItemGroup>
 
 </Project>

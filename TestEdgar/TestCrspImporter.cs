@@ -17,6 +17,10 @@ namespace TestEdgar
             var result = importer.ReadAllCrsp();
 
             Console.WriteLine(result);
+
+            var averageTurnover = result.AverageTurnover;
+
+
         }
     }
 }

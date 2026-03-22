@@ -1,4 +1,5 @@
 ﻿using System.Globalization;
+using System.Text;
 
 using CsvHelper;
 using CsvHelper.Configuration;
@@ -16,6 +17,7 @@ namespace Edgar.Companies
         // Column indices
         private int _permnoIdx, _dateIdx, _prcIdx, _openIdx, _bidIdx, _askIdx, _bidloIdx, _askhiIdx, _exchdIdx;
         private int _volIdx, _numtrdIdx, _shroutIdx, _retIdx, _retxIdx, _dlstcdIdx, _dlretIdx, _dlretxIdx, _dlprcIdx;
+        private int _shrcdIdx;
 
         public CrspImporter(AppSettings settings)
         {
@@ -41,25 +43,20 @@ namespace Edgar.Companies
             LoadIndices();
         }
 
-        public CrspData ReadAllCrsp()
-        {
-            var data = new CrspData();
+        public FirmTradingDays ReadAllCrsp(){
+            var firmTradingDays = new FirmTradingDays();
 
             using var reader = new StreamReader(_crspPath);
             using var parser = new CsvParser(reader, _csvConfig);
 
             // consume header
             if (!parser.Read())
-                return data;
+                return firmTradingDays;
 
             while (parser.Read())
             {
                 var row = parser.Record;
                 if (row is null || row.Length == 0)
-                    continue;
-
-                // PERMNO
-                if (!TryParseInt(GetField(row, _permnoIdx), out var permno))
                     continue;
 
                 // date
@@ -69,12 +66,11 @@ namespace Edgar.Companies
                 var year = dt.Year;
 
                 var day = ParseTradingDay(row, dt);
-                data.AddDay(year, permno, day);
+                firmTradingDays.Add(year, day);
             }
 
-            data.SortAll();
-            return data;
-        }
+            return firmTradingDays;
+        } 
 
         // -------------------- internals --------------------
 
@@ -109,6 +105,8 @@ namespace Edgar.Companies
 
             _exchdIdx = IndexOf(header, "EXCHCD");
 
+            _shrcdIdx = IndexOf(header, "shrcd");
+
             if (_permnoIdx < 0 || _dateIdx < 0)
                 throw new InvalidDataException("CRSP CSV is missing required columns: PERMNO, date.");
         }
@@ -126,6 +124,8 @@ namespace Edgar.Companies
             return new FirmTradingDay
             {
                 Date = dt,
+
+                Permno = ReadIntOrNull(row, _permnoIdx) ?? 0,
 
                 // PRC: negative means midpoint (CRSP convention)
                 ClosePrcRaw = prc.HasValue ? (decimal)prc.Value : null,
@@ -151,7 +151,11 @@ namespace Edgar.Companies
                 DelistRetExDiv = ReadDoubleOrNull(row, _dlretxIdx),
                 DelistPrice = ReadDoubleOrNull(row, _dlprcIdx),
 
-                ExchangeCodes = (ExchangeCodes)(ReadIntOrNull(row, _exchdIdx) ?? 0)
+                ExchangeCodes = (ExchangeCodes)(ReadIntOrNull(row, _exchdIdx) ?? 0),
+
+                ShareCode = ReadIntOrNull(row, _shrcdIdx),
+
+
             };
         }
 

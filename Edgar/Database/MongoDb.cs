@@ -48,7 +48,7 @@ namespace Edgar.Database
                 .Set(x => x.BookEquity, bookToMarket.BookEquity)
                 .Set(x => x.BookToMarket, bookToMarket.BM)
 
-                .Set(x => x.Returns, returns)
+                //.Set(x => x.Returns, returns)
                 .Set(x => x.Volatility, volatility)
 
                 .Set(x => x.Leverage, bookToMarket.Leverage)
