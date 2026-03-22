@@ -4,7 +4,7 @@ namespace Edgar.Filter
 {
     public static class FilterFunctions
     {
-        public static string Filter60DaysBeforeAfter(int permno, int year, CrspData crspData)
+        public static string Filter60DaysBeforeAfter(int permno, int year, FirmTradingDays firmTradingDays)
         {
             // At least 60 days of returns and trading
             // volume in the year before and after the filing date
@@ -12,14 +12,14 @@ namespace Edgar.Filter
             int yearBefore = year - 1;
             int yearAfter = year + 1;
 
-            if (crspData.ContainsKey(yearBefore) && crspData.ContainsKey(yearAfter))
+            if (firmTradingDays.ContainsKey(yearBefore) && firmTradingDays.ContainsKey(yearAfter))
             {
-                List<FirmTradingDay> daysBefore = crspData
+                List<FirmTradingDay> daysBefore = firmTradingDays
                     .GetDays(yearBefore, permno)
                     .TakeLast(60)
                     .ToList();
 
-                List<FirmTradingDay> daysAfter = crspData
+                List<FirmTradingDay> daysAfter = firmTradingDays
                     .GetDays(yearAfter, permno)
                     .Take(60)
                     .ToList();

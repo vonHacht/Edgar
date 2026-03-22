@@ -18,7 +18,7 @@ namespace TestEdgar
 
             Console.WriteLine(result);
 
-            var averageTurnover = result.AverageTurnover;
+            //var averageTurnover = result.AverageTurnover;
 
 
         }

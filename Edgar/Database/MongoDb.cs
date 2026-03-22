@@ -17,25 +17,30 @@ namespace Edgar.Database
         public async Task SendFirmYearRegressionPanelDocument(
             int year,
             int permno,
+            string cik,
+            string gvkey,
+            int sic,
             Filing filing,
             DictionaryScores scoresItem1A,
             DictionaryScores scoreItem7,
             double returns,
             double volatility,
-            List<BookToMarket> btm)
+            List<BookToMarket> btm
+            
+            )
         {
             if (btm == null || btm.Count == 0)
                 return;
 
             BookToMarket bookToMarket = btm[0];
 
-            var filter = Builders<FirmYearRegressionPanelDocument>.Filter.And(
+            /*var filter = Builders<FirmYearRegressionPanelDocument>.Filter.And(
                 Builders<FirmYearRegressionPanelDocument>.Filter.Eq(x => x.Permno, permno),
                 Builders<FirmYearRegressionPanelDocument>.Filter.Eq(x => x.Cik, filing.CIK),
                 Builders<FirmYearRegressionPanelDocument>.Filter.Eq(x => x.Gvkey, bookToMarket.Gvkey)
-            );
+            ); */
 
-            var update = Builders<FirmYearRegressionPanelDocument>.Update
+            /*var update = Builders<FirmYearRegressionPanelDocument>.Update
                 .Set(x => x.Cik, filing.CIK)
                 .Set(x => x.Gvkey, bookToMarket.Gvkey)
                 .Set(x => x.FilingDate, filing.DateFiled)
@@ -59,11 +64,11 @@ namespace Edgar.Database
 
                 .Set(x => x.NetIncome, bookToMarket.NetIncome)
 
-                .Set(x => x.TextModelVersion, "llm-risk-v1");
+                .Set(x => x.TextModelVersion, "llm-risk-v1"); */
 
             var options = new UpdateOptions { IsUpsert = true };
 
-            await _database.GetCollection<FirmYearRegressionPanelDocument>(year.ToString()).UpdateOneAsync(filter, update, options);
+            //await _database.GetCollection<FirmYearRegressionPanelDocument>(year.ToString()).UpdateOneAsync(filter, update, options);
         }
     }
 }

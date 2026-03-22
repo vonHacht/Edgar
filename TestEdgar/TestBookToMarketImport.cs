@@ -23,18 +23,27 @@ namespace TestEdgar
                 var a = result.HaveCik(2009, c);
 
                 Console.WriteLine(result);
-
             }
-
         }
 
         [Fact]
         public async Task TestImport()
         {
-
             BookToMarketImporter importer = new BookToMarketImporter(Utilities.Settings);
 
             BookToMarketData result = importer.ReadAllBookToMarket();
+
+            Console.WriteLine(result);
+        }
+
+        [Fact]
+        public async Task TestComputeForwardLossProvision()
+        {
+            BookToMarketImporter importer = new BookToMarketImporter(Utilities.Settings);
+
+            BookToMarketData result = importer.ReadAllBookToMarket();
+
+            result.ComputeForwardLossProvision();
 
             Console.WriteLine(result);
         }

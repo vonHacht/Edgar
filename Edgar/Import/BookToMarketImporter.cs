@@ -18,6 +18,10 @@ namespace Edgar.Import
         private int _ceqIdx, _seqIdx, _txditcIdx, _pstkrvIdx, _pstklIdx, _pstkIdx, _atIdx, _ltIdx;
         private int _mkvaltIdx, _spiIdx, _niIdx;
 
+        // New book-to-market variables from your screenshot
+        private int _sicIdx, _dlttIdx, _piIdx, _pllIdx, _ncoIdx, _npatIdx, _capr1Idx;
+        private int _fdateIdx, _llrciIdx, _llrcrIdx;
+
         public BookToMarketImporter(AppSettings settings)
         {
             ArgumentNullException.ThrowIfNull(settings);
@@ -39,7 +43,7 @@ namespace Edgar.Import
                 BadDataFound = null
             };
 
-            LoadIndices(); // load once, up-front
+            LoadIndices();
         }
 
         public BookToMarketData ReadAllBookToMarket()
@@ -49,7 +53,6 @@ namespace Edgar.Import
             using var reader = new StreamReader(_bookToMarketPath);
             using var parser = new CsvParser(reader, _csvConfig);
 
-            // Header already validated in LoadIndices(), but still need to consume it here
             if (!parser.Read())
                 return data;
 
@@ -59,7 +62,6 @@ namespace Edgar.Import
                 if (row is null || row.Length == 0)
                     continue;
 
-                // datadate
                 if (!TryParseDate(GetField(row, _datadateIdx), out var datadate))
                     continue;
 
@@ -67,11 +69,14 @@ namespace Edgar.Import
                 if (cik.Length == 0)
                     continue;
 
-                var year = datadate.Year; // or parse fyear if you prefer
+                var year = datadate.Year;
 
                 var item = new BookToMarket
                 {
                     Date = datadate,
+
+                    Gvkey = GetField(row, _gvkeyIdx) ?? string.Empty,
+
                     CommonEquity = ReadDoubleOrNaN(row, _ceqIdx),
                     ShareholdersEquity = ReadDoubleOrNaN(row, _seqIdx),
 
@@ -84,15 +89,27 @@ namespace Edgar.Import
                     TotalAssets = ReadDoubleOrNaN(row, _atIdx),
                     TotalLiabilities = ReadDoubleOrNaN(row, _ltIdx),
 
-                    Gvkey = GetField(row, _gvkeyIdx) ?? string.Empty,
                     MarketCap = ReadDoubleOrNaN(row, _mkvaltIdx),
                     SpecialItems = ReadDoubleOrNaN(row, _spiIdx),
-                    NetIncome = ReadDoubleOrNaN(row, _niIdx)
+                    NetIncome = ReadDoubleOrNaN(row, _niIdx),
+
+                    // Added from screenshot
+                    Sic = ReadIntOrNull(row, _sicIdx),
+                    LongTermDebt = ReadDoubleOrNaN(row, _dlttIdx),
+                    PretaxIncome = ReadDoubleOrNaN(row, _piIdx),
+                    LoanLossProvision = ReadDoubleOrNaN(row, _pllIdx),
+                    NetChargeOffs = ReadDoubleOrNaN(row, _ncoIdx),
+                    NonPerformingAssets = ReadDoubleOrNaN(row, _npatIdx),
+                    Tier1CapitalRatio = ReadDoubleOrNaN(row, _capr1Idx),
+                    FinalDate = ReadDateOrNull(row, _fdateIdx),
+                    LoanLossReservesI = ReadDoubleOrNaN(row, _llrciIdx),
+                    LoanLossReservesR = ReadDoubleOrNaN(row, _llrcrIdx)
                 };
 
                 data.Add(year, cik, item);
             }
 
+            data.ComputeForwardLossProvision();
             return data;
         }
 
@@ -129,19 +146,24 @@ namespace Edgar.Import
             _atIdx = IndexOf(header, "at");
             _ltIdx = IndexOf(header, "lt");
 
-            _gvkeyIdx = IndexOf(header, "GVKEY");
             _mkvaltIdx = IndexOf(header, "mkvalt");
             _spiIdx = IndexOf(header, "spi");
-
             _niIdx = IndexOf(header, "ni");
 
-            // Enforce only what you truly need for ReadAllBookToMarket
+            // Added from screenshot
+            _sicIdx = IndexOf(header, "sic");
+            _dlttIdx = IndexOf(header, "dltt");
+            _piIdx = IndexOf(header, "pi");
+            _pllIdx = IndexOf(header, "pll");
+            _ncoIdx = IndexOf(header, "nco");
+            _npatIdx = IndexOf(header, "npat");
+            _capr1Idx = IndexOf(header, "capr1");
+            _fdateIdx = IndexOf(header, "fdate");
+            _llrciIdx = IndexOf(header, "llrci");
+            _llrcrIdx = IndexOf(header, "llrcr");
+
             if (_cikIdx < 0 || _datadateIdx < 0)
                 throw new InvalidDataException("BookToMarket CSV is missing required columns: cik, datadate.");
-
-            // Enforce numeric columns only if you want hard failures instead of NaN defaults:
-            // if (_seqIdx < 0 && _ceqIdx < 0 && (_atIdx < 0 || _ltIdx < 0))
-            //     throw new InvalidDataException("BookToMarket CSV missing equity inputs (seq/ceq or at/lt).");
         }
 
         private static int IndexOf(string[] header, string name)
@@ -149,14 +171,26 @@ namespace Edgar.Import
             for (int i = 0; i < header.Length; i++)
                 if (string.Equals(header[i], name, StringComparison.OrdinalIgnoreCase))
                     return i;
+
             return -1;
         }
 
-        private bool TryParseDate(string? s, out DateTime dt)
-            => DateTime.TryParseExact(s, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out dt);
-
         private static string? GetField(string[] row, int idx)
             => (idx >= 0 && idx < row.Length) ? row[idx] : null;
+
+        private bool TryParseDate(string? s, out DateTime dt)
+            => DateTime.TryParseExact(
+                s,
+                "yyyy-MM-dd",
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.None,
+                out dt);
+
+        private DateTime? ReadDateOrNull(string[] row, int idx)
+        {
+            var s = GetField(row, idx);
+            return TryParseDate(s, out var dt) ? dt : null;
+        }
 
         private double ReadDoubleOrNaN(string[] row, int idx)
         {
@@ -169,7 +203,18 @@ namespace Edgar.Import
                 ? v
                 : double.NaN;
         }
+
+        private int? ReadIntOrNull(string[] row, int idx)
+        {
+            var s = GetField(row, idx);
+            return int.TryParse(
+                s,
+                NumberStyles.Integer,
+                CultureInfo.InvariantCulture,
+                out var v)
+                ? v
+                : null;
+        }
     }
 }
-
 

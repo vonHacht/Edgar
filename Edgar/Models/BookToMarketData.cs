@@ -48,4 +48,39 @@ public class BookToMarketData : SortedDictionary<int, Dictionary<string, List<Bo
                byCik.TryGetValue(cik, out var list) &&
                list.Count > 0;
     }
+
+    public void ComputeForwardLossProvision()
+    {
+        foreach (var (year, byCik) in this)
+        {
+            int nextYear = year + 1;
+
+            if (!TryGetValue(nextYear, out var nextByCik))
+                continue;
+
+            foreach (var (cik, list) in byCik)
+            {
+                if (!nextByCik.TryGetValue(cik, out var nextList) || nextList.Count == 0)
+                    continue;
+
+                // You may want to align by date more precisely, but for now:
+                // assume one observation per year and take the first
+                var nextItem = nextList[0];
+
+                foreach (var item in list)
+                {
+                    if (double.IsNaN(nextItem.SpecialItems) || item.TotalAssets <= 0)
+                    {
+                        item.LossProvisionRaw = double.NaN;
+                        continue;
+                    }
+
+                    item.LossProvisionRaw = nextItem.SpecialItems / item.TotalAssets;
+
+                    double loss = Math.Min(nextItem.SpecialItems, 0.0);
+                    item.LossProvision =  - loss / item.TotalAssets;
+                }
+            }
+        }
+    }
 }

@@ -1,16 +1,33 @@
-﻿namespace Edgar.Models
+﻿using MongoDB.Bson.Serialization.Attributes;
+
+namespace Edgar.Models
 {
     public class DictionaryScores
     {
-        public int TotalWords { get; set; } = 0;
+        [BsonElement("total_words")]
+        public int TotalWords { get; set; }
 
-        public int PositiveWords { get; set; } = 0;
-        public int NegativeWords { get; set; } = 0;
+        [BsonElement("positive_words")]
+        public int PositiveWords { get; set; }
 
-        public int UncertaintyWords { get; set; } = 0;
+        [BsonElement("negative_words")]
+        public int NegativeWords { get; set; }
 
-        public int Sentiment => PositiveWords - NegativeWords;
+        [BsonElement("uncertainty_words")]
+        public int UncertaintyWords { get; set; }
 
-        public int UncertaintyScore => (TotalWords > 0) ? UncertaintyWords / TotalWords : 0;
+        [BsonElement("sentiment")]
+        public int Sentiment { get; set; }
+
+        [BsonElement("uncertainty_score")]
+        public double UncertaintyScore { get; set; }
+
+        public void Recalculate()
+        {
+            Sentiment = PositiveWords - NegativeWords;
+            UncertaintyScore = TotalWords > 0
+                ? (double)UncertaintyWords / TotalWords
+                : 0.0;
+        }
     }
 }

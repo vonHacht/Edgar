@@ -2,38 +2,74 @@
 {
     public sealed class FirmTradingDays
     {
-        private Dictionary<int, List<FirmTradingDay>> _byYear = new Dictionary<int, List<FirmTradingDay>>();
+        // year -> permno -> sorted list of days
+        private readonly Dictionary<int, Dictionary<int, List<FirmTradingDay>>> _data
+            = new();
 
-        /* public FirmTradingDays(IEnumerable<FirmTradingDay> items)
+        public bool ContainsKey(int year)
         {
-            _byYear = items
-                .GroupBy(x => x.Date.Year)
-                .ToDictionary(
-                    g => g.Key,
-                    g => g.OrderBy(x => x.Date).ToList());
-        } */
-
-        public void Sort()
-        {
-            foreach (var list in _byYear.Values)
+            if (!_data.TryGetValue(year, out var byPermno) || byPermno.Count == 0)
             {
-                list.Sort((a, b) => a.Date.CompareTo(b.Date));
+                return false;
             }
+
+            return true;
         }
 
-        public void Add(int year, FirmTradingDay day)
+        public void Add(int year, int permno, FirmTradingDay day)
         {
-            if (!_byYear.TryGetValue(year, out var list))
-                _byYear[year] = list = new List<FirmTradingDay>();
-            
-            list.Add(day);
-            list.Sort(static (a, b) => a.Date.CompareTo(b.Date));
+            if (!_data.TryGetValue(year, out var byPermno))
+                _data[year] = byPermno = new Dictionary<int, List<FirmTradingDay>>();
+
+            if (!byPermno.TryGetValue(permno, out var list))
+                byPermno[permno] = list = new List<FirmTradingDay>();
+
+            list.Add(day); // no sorting here
         }
 
-        public IReadOnlyList<FirmTradingDay> GetByYear(int year) =>
-            _byYear.TryGetValue(year, out var result)
-                ? result
-                : Array.Empty<FirmTradingDay>();
+        public void SortAll()
+        {
+            foreach (var byPermno in _data.Values)
+                foreach (var list in byPermno.Values)
+                    list.Sort(static (a, b) => a.Date.CompareTo(b.Date));
+        }
+
+        public IReadOnlyList<FirmTradingDay> GetDays(int year, int permno)
+        {
+            if (_data.TryGetValue(year, out var byPermno) &&
+                byPermno.TryGetValue(permno, out var list))
+                return list;
+
+            return Array.Empty<FirmTradingDay>();
+        }
+
+        public FirmTradingDay? GetDay(int year, int permno, DateTime date)
+        {
+            if (!_data.TryGetValue(year, out var byPermno))
+                return null;
+
+            if (!byPermno.TryGetValue(permno, out var list) || list.Count == 0)
+                return null;
+
+            // binary search (same as your CrspData)
+            int lo = 0;
+            int hi = list.Count - 1;
+
+            while (lo <= hi)
+            {
+                int mid = (lo + hi) / 2;
+                var cmp = list[mid].Date.CompareTo(date);
+
+                if (cmp == 0)
+                    return list[mid];
+                if (cmp < 0)
+                    lo = mid + 1;
+                else
+                    hi = mid - 1;
+            }
+
+            return null;
+        }
 
         private List<FirmTradingDay> GetFirmHistoryUpTo(DateTime date, int permno)
         {
@@ -41,12 +77,12 @@
 
             int year = date.Year;
 
-            // Collect current year + previous year (usually enough for 60/90 days)
             for (int y = year - 1; y <= year; y++)
             {
-                if (_byYear.TryGetValue(y, out var days))
+                if (_data.TryGetValue(y, out var byPermno) &&
+                    byPermno.TryGetValue(permno, out var list))
                 {
-                    result.AddRange(days.Where(x => x.Permno == permno && x.Date < date));
+                    result.AddRange(list.Where(x => x.Date < date));
                 }
             }
 
@@ -62,21 +98,11 @@
 
             var history = GetFirmHistoryUpTo(date, permno);
 
-            var priorDays = history
-                .TakeLast(d)
-                .ToList();
+            var priorDays = history.TakeLast(d).ToList();
 
             return priorDays.Count == d
                 ? priorDays
                 : Array.Empty<FirmTradingDay>();
-        }
-
-        private FirmTradingDay? GetTradingDay(DateTime date, int permno)
-        {
-            if (!_byYear.TryGetValue(date.Year, out var days))
-                return null;
-
-            return days.FirstOrDefault(x => x.Permno == permno && x.Date == date);
         }
 
         public decimal PriorReturn(DateTime date, int permno, int d = 60)
@@ -136,9 +162,7 @@
             decimal total = 0m;
 
             foreach (var day in priorDays)
-            {
                 total += DailyTurnover(day);
-            }
 
             return total / priorDays.Count;
         }
@@ -152,16 +176,14 @@
             decimal total = 0m;
 
             foreach (var day in priorDays)
-            {
                 total += DailyTurnover(day);
-            }
 
             return total;
         }
 
         public decimal FilingDayReturn(DateTime date, int permno)
         {
-            var day = GetTradingDay(date, permno);
+            var day = GetDay(date.Year, permno, date);
             if (day is null)
                 return 0m;
 

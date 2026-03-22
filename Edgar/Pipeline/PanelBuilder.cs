@@ -49,7 +49,6 @@ namespace Edgar.Pipeline
 
             _bookToMarketData = new BookToMarketImporter(_appSettings).ReadAllBookToMarket();
             _ccmData = new CcmImporter(_appSettings).ReadAllYearsUniqueCcms();
-            //_crspData = new CrspImporter(_appSettings).ReadAllCrsp();
             _firmTradingDays = new CrspImporter(_appSettings).ReadAllCrsp();
 
             _edgarClient = new EdgarClient(_appSettings);
@@ -107,13 +106,13 @@ namespace Edgar.Pipeline
                         continue;
                     }
 
-                    /* var filter60Result = FilterFunctions.Filter60DaysBeforeAfter(permnos.First(), year, _crspData);
+                    var filter60Result = FilterFunctions.Filter60DaysBeforeAfter(permnos.First(), year, _firmTradingDays);
 
                     if (filter60Result != "")
                     {
                         LogCik(filing.CIK, filter60Result);
                         continue;
-                    } */
+                    } 
 
                     ExtractedSections extractedSections = await ProcessFilingAsync(yearKey, filing, ct);
 
@@ -124,22 +123,21 @@ namespace Edgar.Pipeline
                         LogCik(filing.CIK, filterPassed);
                     }
 
-                    /*double? returns = CrspMeasures.ComputeBuyAndHoldReturn(
-                        _crspData,
-                        permnos.First(),
-                        filing.DateFiled,
-                        filing.DateFiled.AddYears(1));
-
-                    double? volatility = CrspMeasures.ComputeVolatility(
-                        _crspData,
-                        permnos.First(),
-                        filing.DateFiled,
-                        filing.DateFiled.AddYears(1),
-                        annualize: true);*/
-
+                    /* FirmYearRegressionPanelDocument firmYearRegressionPanelDocument = new FirmYearRegressionPanelDocument
+                    {
+                        Cik = filing.CIK,
+                        Permno = permnos.First(),
+                        FilingDate = filing.DateFiled,
+                        ScoresItem1A = _dictionaryScorer.Score(extractedSections.Item1AText),
+                        ScoresItem7 = _dictionaryScorer.Score(extractedSections.Item7Text),
+                        BookToMarket = bookToMarkets.FirstOrDefault()?.BookToMarket ?? 0.0,
+                        TextModelVersion = _extractor.ExtractionMethodVersion,
+                        UpdatedAt = DateTime.UtcNow
+                    }; */
 
 
-                    await _db.SendFirmYearRegressionPanelDocument(
+
+                    /*await _db.SendFirmYearRegressionPanelDocument(
                         year,
                         permnos.First(),
                         filing,
@@ -147,7 +145,7 @@ namespace Edgar.Pipeline
                         _dictionaryScorer.Score(extractedSections.Item7Text),
                         0.0,
                         0.0,
-                        bookToMarkets);
+                        bookToMarkets); */
 
                     LogCik(filing.CIK, "Filing {Index}/{Total} for Year {Year} | Finished", i + 1, filings.Count, year);
                 }
@@ -185,8 +183,8 @@ namespace Edgar.Pipeline
             if (permnos.Count == 0)
                 return new List<FirmTradingDay>();
 
-            /*var tradingDays = permnos
-                .Select(p => _crspData.GetDays(year, p))
+            var tradingDays = permnos
+                .Select(p => _firmTradingDays.GetDays(year, p))
                 .FirstOrDefault(days => days != null && days.Any())
                 ?.ToList() ?? new List<FirmTradingDay>();
 
@@ -198,9 +196,7 @@ namespace Edgar.Pipeline
                     filing.CompanyName, year);
             }
 
-            return tradingDays;*/
-
-            return new List<FirmTradingDay>();
+            return tradingDays;
         }
 
         private List<BookToMarket> GetBookToMarketsOrWarn(int year, Filing filing)

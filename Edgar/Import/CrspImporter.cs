@@ -1,5 +1,4 @@
 ﻿using System.Globalization;
-using System.Text;
 
 using CsvHelper;
 using CsvHelper.Configuration;
@@ -43,20 +42,25 @@ namespace Edgar.Companies
             LoadIndices();
         }
 
-        public FirmTradingDays ReadAllCrsp(){
-            var firmTradingDays = new FirmTradingDays();
+        public FirmTradingDays ReadAllCrsp()
+        {
+            var data = new FirmTradingDays();
 
             using var reader = new StreamReader(_crspPath);
             using var parser = new CsvParser(reader, _csvConfig);
 
             // consume header
             if (!parser.Read())
-                return firmTradingDays;
+                return data;
 
             while (parser.Read())
             {
                 var row = parser.Record;
                 if (row is null || row.Length == 0)
+                    continue;
+
+                // PERMNO
+                if (!TryParseInt(GetField(row, _permnoIdx), out var permno))
                     continue;
 
                 // date
@@ -66,11 +70,12 @@ namespace Edgar.Companies
                 var year = dt.Year;
 
                 var day = ParseTradingDay(row, dt);
-                firmTradingDays.Add(year, day);
+                data.Add(year, permno, day);
             }
 
-            return firmTradingDays;
-        } 
+            data.SortAll();
+            return data;
+        }
 
         // -------------------- internals --------------------
 

@@ -10,40 +10,47 @@
         public double ShareholdersEquity { get; set; } // seq
 
         public double PrefferedStockRedemptionValue { get; set; } // pstkrv
-
         public double PrefferedStockLiquidatingValue { get; set; } // pstkl
-
         public double PrefferedStock { get; set; } // pstk
 
         public double DeferredTaxes { get; set; } // txditc
 
         public double TotalAssets { get; set; } // at
-
         public double TotalLiabilities { get; set; } // lt
 
         public double MarketCap { get; set; } // mkvalt
-
         public double SpecialItems { get; set; } // spi
-
         public double NetIncome { get; set; } // ni
 
-        public double LossProvision => _lossProvision();
+        // New variables
+        public int? Sic { get; set; } // sic
+        public double LongTermDebt { get; set; } // dltt
+        public double PretaxIncome { get; set; } // pi
+        public double LoanLossProvision { get; set; } // pll
+        public double NetChargeOffs { get; set; } // nco
+        public double NonPerformingAssets { get; set; } // npat
+        public double Tier1CapitalRatio { get; set; } // capr1
+        public DateTime? FinalDate { get; set; } // fdate
+        public double LoanLossReservesI { get; set; } // llrci
+        public double LoanLossReservesR { get; set; } // llrcr
 
-        public double Size => Math.Log(MarketCap);
+        public double LossProvision { get; set; }
 
-        public double BookEquity { get { return _bookEquity(); } }
+        public double LossProvisionRaw { get; set; }
 
-        public double BM { get { return _bookToMarket(); } } // Book-to-market ratio
+        public double Size => MarketCap > 0.0 ? Math.Log(MarketCap) : double.NaN;
+
+        public double BookEquity => _bookEquity();
+
+        public double BM => _bookToMarket(); // Book-to-market ratio
 
         public double Leverage => _leverage();
 
         private double _bookEquity()
         {
-            // static bool IsMissing(double v) => double.IsNaN(v);
             static bool HasValue(double v) => !double.IsNaN(v);
             static bool Pos(double v) => !double.IsNaN(v) && v > 0.0;
 
-            // Preferred stock priority: pstkrv -> pstkl -> pstk
             double preferred =
                 Pos(PrefferedStockRedemptionValue) ? PrefferedStockRedemptionValue :
                 Pos(PrefferedStockLiquidatingValue) ? PrefferedStockLiquidatingValue :
@@ -58,12 +65,11 @@
             }
             else if (Pos(CommonEquity))
             {
-                // Use CEQ as-is; preferred is handled consistently below
                 baseEquity = CommonEquity;
             }
             else if (Pos(TotalAssets) && HasValue(TotalLiabilities))
             {
-                baseEquity = TotalAssets - TotalLiabilities; // lt may be 0
+                baseEquity = TotalAssets - TotalLiabilities;
             }
             else
             {
@@ -78,13 +84,9 @@
         private double _bookToMarket()
         {
             if (BookEquity > 0.0 && MarketCap > 0.0)
-            {
                 return BookEquity / MarketCap;
-            }
-            else
-            {
-                return 0.0; // or NaN, depending on how you want to handle this case
-            }
+
+            return 0.0;
         }
 
         private double _leverage()
@@ -93,32 +95,10 @@
             static bool HasValue(double v) => !double.IsNaN(v);
 
             if (Pos(TotalAssets) && HasValue(TotalLiabilities))
-            {
                 return TotalLiabilities / TotalAssets;
-            }
 
             return double.NaN;
         }
-
-        private double _lossProvision()
-        {
-            static bool Pos(double v) => !double.IsNaN(v) && v > 0.0;
-            static bool HasValue(double v) => !double.IsNaN(v);
-
-            if (HasValue(SpecialItems) && Pos(TotalAssets))
-            {
-                // Only capture losses (negative special items)
-                double loss = Math.Min(SpecialItems, 0.0);
-                return -loss / TotalAssets;
-            }
-
-            return double.NaN;
-        }
-
-        public double LossProvisionRaw =>
-            (double.IsNaN(SpecialItems) || TotalAssets <= 0)
-            ? double.NaN
-            : SpecialItems / TotalAssets;
     }
 }
 
