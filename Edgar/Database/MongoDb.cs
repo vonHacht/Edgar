@@ -16,59 +16,22 @@ namespace Edgar.Database
 
         public async Task SendFirmYearRegressionPanelDocument(
             int year,
-            int permno,
-            string cik,
-            string gvkey,
-            int sic,
-            Filing filing,
-            DictionaryScores scoresItem1A,
-            DictionaryScores scoreItem7,
-            double returns,
-            double volatility,
-            List<BookToMarket> btm
-            
-            )
+            FirmYearRegressionPanelDocument document)
         {
-            if (btm == null || btm.Count == 0)
-                return;
+            if (document == null)
+                throw new ArgumentNullException(nameof(document));
 
-            BookToMarket bookToMarket = btm[0];
+            var collection = _database.GetCollection<FirmYearRegressionPanelDocument>(year.ToString());
 
-            /*var filter = Builders<FirmYearRegressionPanelDocument>.Filter.And(
-                Builders<FirmYearRegressionPanelDocument>.Filter.Eq(x => x.Permno, permno),
-                Builders<FirmYearRegressionPanelDocument>.Filter.Eq(x => x.Cik, filing.CIK),
-                Builders<FirmYearRegressionPanelDocument>.Filter.Eq(x => x.Gvkey, bookToMarket.Gvkey)
-            ); */
+            var filter = Builders<FirmYearRegressionPanelDocument>.Filter.And(
+                Builders<FirmYearRegressionPanelDocument>.Filter.Eq(x => x.Permno, document.Permno),
+                Builders<FirmYearRegressionPanelDocument>.Filter.Eq(x => x.Cik, document.Cik),
+                Builders<FirmYearRegressionPanelDocument>.Filter.Eq(x => x.Gvkey, document.Gvkey)
+            );
 
-            /*var update = Builders<FirmYearRegressionPanelDocument>.Update
-                .Set(x => x.Cik, filing.CIK)
-                .Set(x => x.Gvkey, bookToMarket.Gvkey)
-                .Set(x => x.FilingDate, filing.DateFiled)
+            var options = new ReplaceOptions { IsUpsert = true };
 
-                .Set(x => x.ScoresItem1A, scoresItem1A)
-                .Set(x => x.ScoresItem7, scoreItem7)
-
-                .Set(x => x.Size, bookToMarket.Size)
-                .Set(x => x.MarketEquity, bookToMarket.MarketCap)
-                .Set(x => x.BookEquity, bookToMarket.BookEquity)
-                .Set(x => x.BookToMarket, bookToMarket.BM)
-
-                //.Set(x => x.Returns, returns)
-                .Set(x => x.Volatility, volatility)
-
-                .Set(x => x.Leverage, bookToMarket.Leverage)
-                .Set(x => x.TotalAssets, bookToMarket.TotalAssets)
-
-                .Set(x => x.LossProvisionsRawT1, bookToMarket.LossProvisionRaw)
-                .Set(x => x.LossProvisionsT1, bookToMarket.LossProvision)
-
-                .Set(x => x.NetIncome, bookToMarket.NetIncome)
-
-                .Set(x => x.TextModelVersion, "llm-risk-v1"); */
-
-            var options = new UpdateOptions { IsUpsert = true };
-
-            //await _database.GetCollection<FirmYearRegressionPanelDocument>(year.ToString()).UpdateOneAsync(filter, update, options);
+            await collection.ReplaceOneAsync(filter, document, options);
         }
     }
 }

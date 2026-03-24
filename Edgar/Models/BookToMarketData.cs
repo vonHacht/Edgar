@@ -25,16 +25,19 @@ public class BookToMarketData : SortedDictionary<int, Dictionary<string, List<Bo
         list.Add(item);
     }
 
-    public IReadOnlyList<BookToMarket> Get(int year, string cik)
+    public BookToMarket? Get(int year, string cik, DateTime filingDate)
     {
         if (string.IsNullOrWhiteSpace(cik))
-            return Array.Empty<BookToMarket>();
+            return null;
 
         if (TryGetValue(year, out var byCik) &&
-            byCik.TryGetValue(cik.Trim(), out var list))
-            return list;
+            byCik.TryGetValue(cik.Trim(), out var list) &&
+            list.Count > 0)
+        {
+            return list.MinBy(item => Math.Abs((item.Date - filingDate).Ticks));
+        }
 
-        return Array.Empty<BookToMarket>();
+        return null;
     }
 
     public bool HaveCik(int year, string cik)
@@ -78,7 +81,7 @@ public class BookToMarketData : SortedDictionary<int, Dictionary<string, List<Bo
                     item.LossProvisionRaw = nextItem.SpecialItems / item.TotalAssets;
 
                     double loss = Math.Min(nextItem.SpecialItems, 0.0);
-                    item.LossProvision =  - loss / item.TotalAssets;
+                    item.LossProvision = -loss / item.TotalAssets;
                 }
             }
         }

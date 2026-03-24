@@ -23,7 +23,7 @@
         public double NetIncome { get; set; } // ni
 
         // New variables
-        public int? Sic { get; set; } // sic
+        public int Sic { get; set; } // sic
         public double LongTermDebt { get; set; } // dltt
         public double PretaxIncome { get; set; } // pi
         public double LoanLossProvision { get; set; } // pll

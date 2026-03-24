@@ -1,6 +1,4 @@
-﻿using System.Net.NetworkInformation;
-
-using Edgar.Config;
+﻿using Edgar.Config;
 
 namespace TestEdgar
 {

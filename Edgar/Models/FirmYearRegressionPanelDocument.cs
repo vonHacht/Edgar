@@ -11,7 +11,7 @@ namespace Edgar.Models
     {
         [BsonId]
         [BsonRepresentation(BsonType.ObjectId)]
-        public required string Id { get; set; }
+        public string Id { get; set; }
 
         /// <summary>
         /// SEC Central Index Key.
@@ -85,25 +85,25 @@ namespace Edgar.Models
         /// For example, annual buy-and-hold return.
         /// </summary>
         [BsonElement("prior_return")]
-        public required double PriorReturn { get; set; }
+        public required decimal PriorReturn { get; set; }
 
         /// <summary>
         /// Optional stock return volatility.
         /// </summary>
         [BsonElement("volatility")]
-        public required double Volatility { get; set; }
+        public required decimal Volatility { get; set; }
 
         [BsonElement("realized_variance")]
-        public required double RealizedVariance { get; set; }
+        public required decimal RealizedVariance { get; set; }
 
         [BsonElement("turnover")]
-        public required double Turnover { get; set; }
+        public required decimal Turnover { get; set; }
 
         [BsonElement("turnover_avg")]
-        public required double TurnoverAvg { get; set; }
+        public required decimal TurnoverAvg { get; set; }
 
         [BsonElement("filing_day_return")]
-        public required double FilingDayReturn { get; set; }
+        public required decimal FilingDayReturn { get; set; }
 
         /// <summary>
         /// Optional leverage control.

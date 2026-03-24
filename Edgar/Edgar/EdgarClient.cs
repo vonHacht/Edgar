@@ -1,6 +1,6 @@
-﻿using Edgar.Config;
+﻿using System.Net;
 
-using System.Net;
+using Edgar.Config;
 
 public sealed class EdgarClient : IDisposable
 {

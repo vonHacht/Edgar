@@ -4,10 +4,10 @@ namespace Edgar.Filter
 {
     public static class FilterProcess
     {
-        public static string Passed(Filing filing,
+        public static string Process(Filing filing,
             ExtractedSections sections,
             List<FirmTradingDay> ftd,
-            List<BookToMarket> btm)
+            BookToMarket btm)
         {
             // CRSP market capitalization data available
             // Stock price > $3 on day before filing
@@ -58,20 +58,10 @@ namespace Edgar.Filter
 
             // COMPUSTAT book-to-market data available
             // Book-value > 0
-            if (BookToMarketValue(btm) <= 0)
+            if (btm.BookEquity <= 0)
                 return "COMPUSTAT book-to-market data not available or less then 0";
 
             return "";
-        }
-
-        private static double BookToMarketValue(List<BookToMarket> btm)
-        {
-            if (!btm.Any())
-                return 0;
-
-            double first = btm.First().BookEquity;
-
-            return btm.All(b => b.BookEquity == first) ? first : -1;
         }
     }
 }

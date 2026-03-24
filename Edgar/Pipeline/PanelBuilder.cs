@@ -22,7 +22,6 @@ namespace Edgar.Pipeline
 
         private readonly BookToMarketData _bookToMarketData;
         private readonly CikPermnoMap _ccmData;
-        //private readonly CrspData _crspData;
         private readonly FirmTradingDays _firmTradingDays;
 
         private readonly EdgarClient _edgarClient;
@@ -36,7 +35,7 @@ namespace Edgar.Pipeline
 
         private static readonly int[] Years =
        {
-            2009,
+            //2009,
             2010, 2011, 2012, 2013, 2014,
             2015, 2016, 2017, 2018, 2019,
             2020, 2021, 2022, 2023, 2024
@@ -84,8 +83,9 @@ namespace Edgar.Pipeline
                 var filing = filings[i];
 
                 var permnos = GetPermnosOrWarn(filing);
+                var prevTradingDays = GetFirstTradingDaysOrWarn(year - 1, filing, permnos);
                 var tradingDays = GetFirstTradingDaysOrWarn(year, filing, permnos);
-                var bookToMarkets = GetBookToMarketsOrWarn(year, filing);
+                var bookToMarket = GetBookToMarketsOrWarn(year, filing, filing.DateFiled);
 
                 using var scope = _logger.BeginScope(new Dictionary<string, object>
                 {
@@ -100,7 +100,7 @@ namespace Edgar.Pipeline
                 {
                     LogCik(filing.CIK, "Filing {Index}/{Total} for Year {Year} | Starting", i + 1, filings.Count, year);
 
-                    if (permnos.Count == 0 || tradingDays.Count == 0 || bookToMarkets.Count == 0)
+                    if (permnos.Count == 0 || tradingDays.Count == 0 || bookToMarket == null)
                     {
                         LogCik(filing.CIK, "Skipping filing due to missing required data (CCM/CRSP/BTM).");
                         continue;
@@ -112,40 +112,68 @@ namespace Edgar.Pipeline
                     {
                         LogCik(filing.CIK, filter60Result);
                         continue;
-                    } 
+                    }
 
                     ExtractedSections extractedSections = await ProcessFilingAsync(yearKey, filing, ct);
 
-                    var filterPassed = FilterProcess.Passed(filing, extractedSections, tradingDays, bookToMarkets);
+                    var filterProcess = FilterProcess.Process(filing, extractedSections, tradingDays, bookToMarket);
 
-                    if (filterPassed != "")
+                    if (filterProcess != "")
                     {
-                        LogCik(filing.CIK, filterPassed);
+                        LogCik(filing.CIK, filterProcess);
+                        continue;
                     }
 
-                    /* FirmYearRegressionPanelDocument firmYearRegressionPanelDocument = new FirmYearRegressionPanelDocument
+                    prevTradingDays.AddRange(tradingDays);
+
+                    FirmYearRegressionPanelDocument firmYearRegressionPanelDocument = new FirmYearRegressionPanelDocument
                     {
                         Cik = filing.CIK,
                         Permno = permnos.First(),
+                        Gvkey = bookToMarket.Gvkey,
                         FilingDate = filing.DateFiled,
+                        Sic = bookToMarket.Sic,
                         ScoresItem1A = _dictionaryScorer.Score(extractedSections.Item1AText),
                         ScoresItem7 = _dictionaryScorer.Score(extractedSections.Item7Text),
-                        BookToMarket = bookToMarkets.FirstOrDefault()?.BookToMarket ?? 0.0,
-                        TextModelVersion = _extractor.ExtractionMethodVersion,
+
+                        PriorReturn = Utilities.TradingDaysCalculations.PriorReturn(prevTradingDays, filing.DateFiled),
+                        Volatility = Utilities.TradingDaysCalculations.RealizedVolatility(prevTradingDays, filing.DateFiled),
+                        RealizedVariance = Utilities.TradingDaysCalculations.RealizedVariance(prevTradingDays, filing.DateFiled),
+                        Turnover = Utilities.TradingDaysCalculations.CumulativeTurnover(prevTradingDays, filing.DateFiled),
+                        TurnoverAvg = Utilities.TradingDaysCalculations.AverageTurnover(prevTradingDays, filing.DateFiled),
+                        FilingDayReturn = Utilities.TradingDaysCalculations.FilingDayReturn(prevTradingDays, filing.DateFiled),
+
+                        LossProvisionsT1 = bookToMarket.LossProvision,
+                        LossProvisionsRawT1 = bookToMarket.LossProvisionRaw,
+
+                        CommonEquity = bookToMarket.CommonEquity,
+                        SpecialItems = bookToMarket.SpecialItems,
+                        BookEquity = bookToMarket.BookEquity,
+                        BookToMarket = bookToMarket.BM,
+                        Leverage = bookToMarket.Leverage,
+                        TotalAssets = bookToMarket.TotalAssets,
+                        LoanLossProvisions = bookToMarket.LoanLossProvision,
+                        NetIncome = bookToMarket.NetIncome,
+                        Size = bookToMarket.Size,
+                        MarketEquity = bookToMarket.MarketCap,
+                        Tier1CapitalRatio = bookToMarket.Tier1CapitalRatio,
+                        LoanLossReservesR = bookToMarket.LoanLossReservesR,
+                        LoanLossReservesI = bookToMarket.LoanLossReservesI,
+                        NonPerformingAssets = bookToMarket.NonPerformingAssets,
+                        NetChargeOffs = bookToMarket.NetChargeOffs,
+                        PreTaxIncome = bookToMarket.PretaxIncome,
+                        LongTermDebt = bookToMarket.PretaxIncome,
+
+                        // from Compustat BANK
+                        TotalLoansNet = 0,
+                        LoanLossReserves = 0,
+
+                        TextModelVersion = "",
                         UpdatedAt = DateTime.UtcNow
-                    }; */
+                    };
 
 
-
-                    /*await _db.SendFirmYearRegressionPanelDocument(
-                        year,
-                        permnos.First(),
-                        filing,
-                        _dictionaryScorer.Score(extractedSections.Item1AText),
-                        _dictionaryScorer.Score(extractedSections.Item7Text),
-                        0.0,
-                        0.0,
-                        bookToMarkets); */
+                    await _db.SendFirmYearRegressionPanelDocument(year, firmYearRegressionPanelDocument);
 
                     LogCik(filing.CIK, "Filing {Index}/{Total} for Year {Year} | Finished", i + 1, filings.Count, year);
                 }
@@ -199,11 +227,11 @@ namespace Edgar.Pipeline
             return tradingDays;
         }
 
-        private List<BookToMarket> GetBookToMarketsOrWarn(int year, Filing filing)
+        private BookToMarket? GetBookToMarketsOrWarn(int year, Filing filing, DateTime filingDate)
         {
-            var bookToMarkets = _bookToMarketData.Get(year, filing.CIK)?.ToList() ?? new List<BookToMarket>();
+            var bookToMarkets = _bookToMarketData.Get(year, filing.CIK, filingDate);
 
-            if (bookToMarkets.Count == 0)
+            if (bookToMarkets == null)
             {
                 LogCik(
                     filing.CIK,

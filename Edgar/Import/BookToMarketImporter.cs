@@ -94,7 +94,7 @@ namespace Edgar.Import
                     NetIncome = ReadDoubleOrNaN(row, _niIdx),
 
                     // Added from screenshot
-                    Sic = ReadIntOrNull(row, _sicIdx),
+                    Sic = ReadIntOrZero(row, _sicIdx),
                     LongTermDebt = ReadDoubleOrNaN(row, _dlttIdx),
                     PretaxIncome = ReadDoubleOrNaN(row, _piIdx),
                     LoanLossProvision = ReadDoubleOrNaN(row, _pllIdx),
@@ -204,7 +204,7 @@ namespace Edgar.Import
                 : double.NaN;
         }
 
-        private int? ReadIntOrNull(string[] row, int idx)
+        private int ReadIntOrZero(string[] row, int idx)
         {
             var s = GetField(row, idx);
             return int.TryParse(
@@ -213,7 +213,7 @@ namespace Edgar.Import
                 CultureInfo.InvariantCulture,
                 out var v)
                 ? v
-                : null;
+                : 0;
         }
     }
 }

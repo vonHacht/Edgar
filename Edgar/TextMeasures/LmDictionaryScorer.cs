@@ -30,6 +30,7 @@ namespace Edgar.TextMeasures
                 if (lmDictionaries.Negative.Contains(token)) dictionaryScores.NegativeWords++;
             }
 
+            dictionaryScores.Recalculate();
             return dictionaryScores;
         }
 
