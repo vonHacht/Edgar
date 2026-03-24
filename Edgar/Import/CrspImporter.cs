@@ -16,7 +16,7 @@ namespace Edgar.Companies
         // Column indices
         private int _permnoIdx, _dateIdx, _prcIdx, _openIdx, _bidIdx, _askIdx, _bidloIdx, _askhiIdx, _exchdIdx;
         private int _volIdx, _numtrdIdx, _shroutIdx, _retIdx, _retxIdx, _dlstcdIdx, _dlretIdx, _dlretxIdx, _dlprcIdx;
-        private int _shrcdIdx;
+        private int _shrcdIdx, _vwretdIdx, _vwretxIdx;
 
         public CrspImporter(AppSettings settings)
         {
@@ -112,6 +112,9 @@ namespace Edgar.Companies
 
             _shrcdIdx = IndexOf(header, "shrcd");
 
+            _vwretdIdx = IndexOf(header, "vwretd");
+            _vwretxIdx = IndexOf(header, "vwretx");
+
             if (_permnoIdx < 0 || _dateIdx < 0)
                 throw new InvalidDataException("CRSP CSV is missing required columns: PERMNO, date.");
         }
@@ -160,7 +163,8 @@ namespace Edgar.Companies
 
                 ShareCode = ReadIntOrNull(row, _shrcdIdx),
 
-
+                ValueWeightedReturnExcludingDividents = ReadDoubleOrNull(row, _vwretxIdx),
+                ValueWeightedReturnIncludingDividends = ReadDoubleOrNull(row, _vwretdIdx)
             };
         }
 

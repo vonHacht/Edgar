@@ -34,6 +34,10 @@
 
         public ExchangeCodes ExchangeCodes { get; init; } // EXCHCD
 
+        public double? ValueWeightedReturnIncludingDividends { get; init; } // vwretd
+
+        public double? ValueWeightedReturnExcludingDividents { get; init; } // vwretx
+
         public int? ShareCode { get; init; } // shrcd
 
         // --- Market Cap ---

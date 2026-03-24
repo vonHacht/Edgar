@@ -176,18 +176,33 @@ namespace Edgar.Utilities
                 }
             }
 
+            // Need 4 trading days: t = 0,1,2,3
             if (startIndex == -1 || startIndex + 4 > tradingDays.Count)
                 return 0m;
 
-            decimal compounded = 1m;
+            decimal firmCompounded = 1m;
+            decimal marketCompounded = 1m;
 
             for (int i = 0; i < 4; i++)
             {
                 var day = tradingDays[startIndex + i];
-                var r = (decimal)(day.Ret ?? 0.0);
-                compounded *= (1m + r);
+
+                decimal rFirm = (decimal)(day.Ret ?? 0.0);
+                decimal rMarket = (decimal)(day.ValueWeightedReturnIncludingDividends ?? 0.0);
+                decimal dlret = (decimal)(day.DelistRet ?? 0.0);
+
+                // Firm side: (1 + r_firm,t)(1 + dlret_t)
+                firmCompounded *= (1m + rFirm) * (1m + dlret);
+
+                // Market side: (1 + r_market,t)
+                marketCompounded *= (1m + rMarket);
             }
 
-            return compounded - 1m;
+            decimal firmReturn = firmCompounded - 1m;
+            decimal marketReturn = marketCompounded - 1m;
+
+            // Formula multiplies by 100
+            return 100m * (firmReturn - marketReturn);
         }
     }
+}
