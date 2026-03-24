@@ -159,5 +159,35 @@ namespace Edgar.Utilities
 
             return day.Ret.HasValue ? (decimal)day.Ret.Value : 0m;
         }
+
+        public static decimal Return4Days(List<FirmTradingDay> tradingDays, DateTime filingDate)
+        {
+            if (tradingDays == null || tradingDays.Count == 0)
+                return 0m;
+
+            int startIndex = -1;
+
+            for (int i = 0; i < tradingDays.Count; i++)
+            {
+                if (tradingDays[i].Date >= filingDate)
+                {
+                    startIndex = i;
+                    break;
+                }
+            }
+
+            if (startIndex == -1 || startIndex + 4 > tradingDays.Count)
+                return 0m;
+
+            decimal compounded = 1m;
+
+            for (int i = 0; i < 4; i++)
+            {
+                var day = tradingDays[startIndex + i];
+                var r = (decimal)(day.Ret ?? 0.0);
+                compounded *= (1m + r);
+            }
+
+            return compounded - 1m;
+        }
     }
-}

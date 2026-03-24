@@ -1,5 +1,6 @@
 ﻿using Edgar.Models;
 
+using MongoDB.Bson;
 using MongoDB.Driver;
 
 namespace Edgar.Database
@@ -20,6 +21,9 @@ namespace Edgar.Database
         {
             if (document == null)
                 throw new ArgumentNullException(nameof(document));
+
+            if (string.IsNullOrWhiteSpace(document.Id))
+                document.Id = ObjectId.GenerateNewId().ToString();
 
             var collection = _database.GetCollection<FirmYearRegressionPanelDocument>(year.ToString());
 

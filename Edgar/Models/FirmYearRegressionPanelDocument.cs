@@ -11,7 +11,7 @@ namespace Edgar.Models
     {
         [BsonId]
         [BsonRepresentation(BsonType.ObjectId)]
-        public string Id { get; set; }
+        public string ?Id { get; set; }
 
         /// <summary>
         /// SEC Central Index Key.
@@ -86,6 +86,9 @@ namespace Edgar.Models
         /// </summary>
         [BsonElement("prior_return")]
         public required decimal PriorReturn { get; set; }
+
+        [BsonElement("event_period_excess_return")]
+        public required decimal EventPeriodExcessReturn { get; set; }
 
         /// <summary>
         /// Optional stock return volatility.

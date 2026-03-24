@@ -35,10 +35,11 @@ namespace Edgar.Pipeline
 
         private static readonly int[] Years =
        {
-            //2009,
+            // 2009,
             2010, 2011, 2012, 2013, 2014,
             2015, 2016, 2017, 2018, 2019,
-            2020, 2021, 2022, 2023, 2024
+            2020, 2021, 2022, 2023, 
+            // 2024
         };
 
         public PanelBuilder(AppSettings appSettings)
@@ -84,6 +85,7 @@ namespace Edgar.Pipeline
 
                 var permnos = GetPermnosOrWarn(filing);
                 var prevTradingDays = GetFirstTradingDaysOrWarn(year - 1, filing, permnos);
+                var afterTradingDays = GetFirstTradingDaysOrWarn(year + 1, filing, permnos);
                 var tradingDays = GetFirstTradingDaysOrWarn(year, filing, permnos);
                 var bookToMarket = GetBookToMarketsOrWarn(year, filing, filing.DateFiled);
 
@@ -125,6 +127,7 @@ namespace Edgar.Pipeline
                     }
 
                     prevTradingDays.AddRange(tradingDays);
+                    tradingDays.AddRange(afterTradingDays);
 
                     FirmYearRegressionPanelDocument firmYearRegressionPanelDocument = new FirmYearRegressionPanelDocument
                     {
@@ -142,6 +145,7 @@ namespace Edgar.Pipeline
                         Turnover = Utilities.TradingDaysCalculations.CumulativeTurnover(prevTradingDays, filing.DateFiled),
                         TurnoverAvg = Utilities.TradingDaysCalculations.AverageTurnover(prevTradingDays, filing.DateFiled),
                         FilingDayReturn = Utilities.TradingDaysCalculations.FilingDayReturn(prevTradingDays, filing.DateFiled),
+                        EventPeriodExcessReturn = Utilities.TradingDaysCalculations.Return4Days(tradingDays, filing.DateFiled),
 
                         LossProvisionsT1 = bookToMarket.LossProvision,
                         LossProvisionsRawT1 = bookToMarket.LossProvisionRaw,
