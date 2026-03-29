@@ -13,6 +13,10 @@ namespace Edgar.Parsing
     /// </summary>
     public class ItemSectionExtractor
     {
+        private static readonly string FilenameItem1A = "extracted_sections_item1A.txt";
+
+        private static readonly string FilenameItem7 = "extracted_sections_item7.txt";
+
         // Item 1A start: try to match "Item 1A" with optional punctuation and optional "Risk Factors"
         private static readonly Regex Item1AStart = new Regex(
             @"(?is)\bitem\s*1a\b\s*[\.\-:–—]?\s*(risk\s*factors)?\b",
@@ -42,7 +46,23 @@ namespace Edgar.Parsing
             @"(?is)\bitem\s*\d+\s*[a-z]?\b",
             RegexOptions.Compiled);
 
-        public ExtractedSections Extract(string cleanedText, bool extractItem7)
+        public ExtractedSections ExtractFile(string directoryName) 
+        {
+            string text7 = File.ReadAllText(Path.Combine(directoryName, FilenameItem7));
+
+            string text1A = File.ReadAllText(Path.Combine(directoryName, FilenameItem1A));
+
+            return new ExtractedSections
+            {
+                FoundItem1A = text1A.Length > 0,
+                FoundItem7 = text7.Length > 0,
+                ExtractionMethodVersion = "v1-file",
+                Item1AText = text1A,
+                Item7Text = text7,
+            };
+        }
+
+        public ExtractedSections Extract(string cleanedText, bool extractItem7, string directoryName = "")
         {
             if (string.IsNullOrWhiteSpace(cleanedText))
             {
@@ -98,7 +118,25 @@ namespace Edgar.Parsing
                 }
             }
 
+            if (directoryName != "") 
+            {
+                if (result.FoundItem7)
+                {
+                    writeItemToFile(result.Item7Text, directoryName, FilenameItem7);
+                }
+
+                if (result.FoundItem1A)
+                {
+                    writeItemToFile(result.Item1AText, directoryName, FilenameItem1A);
+                }
+            }
+
             return result;
+        }
+
+        private static void writeItemToFile(string text, string directory, string filename) 
+        {
+            File.WriteAllText(Path.Combine(directory, filename), text);
         }
 
         /// <summary>

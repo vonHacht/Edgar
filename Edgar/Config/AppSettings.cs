@@ -54,14 +54,11 @@ namespace Edgar.Config
         public string DefaultLocalHost { get; init; } = "";
         public string DefaultEdgarDbName { get; init; } = "";
 
-        public static AppSettings Load()
-        {
-            var projectRoot = ResolveProjectRootFromBaseDirectory();
-            return Load(projectRoot);
-        }
-
         public static AppSettings Load(string projectRoot)
         {
+            if (projectRoot == null || projectRoot == string.Empty)
+                projectRoot = ResolveProjectRootFromBaseDirectory();
+
             projectRoot = Path.GetFullPath(projectRoot);
 
             LoadEnvFile(projectRoot);

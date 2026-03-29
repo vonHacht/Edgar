@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Globalization;
+using System.Reflection.Metadata;
 
 using Edgar.Companies;
 using Edgar.Config;
@@ -10,8 +11,11 @@ using Edgar.Logging;
 using Edgar.Models;
 using Edgar.Parsing;
 using Edgar.TextMeasures;
+using Edgar.Utilities;
 
 using Microsoft.Extensions.Logging;
+
+using SharpCompress.Common;
 
 namespace Edgar.Pipeline
 {
@@ -30,6 +34,7 @@ namespace Edgar.Pipeline
         private readonly ItemSectionExtractor _extractor = new ItemSectionExtractor();
 
         private readonly LmDictionaryScorer _dictionaryScorer;
+        private readonly LlmScorer _llmDictionaryScorer;
 
         private readonly Database.MongoDB _db;
 
@@ -38,7 +43,8 @@ namespace Edgar.Pipeline
             // 2009,
             2010, 2011, 2012, 2013, 2014,
             2015, 2016, 2017, 2018, 2019,
-            2020, 2021, 2022, 2023, 
+            2020, 2021, 2022, 
+            2023, 
             // 2024
         };
 
@@ -56,20 +62,21 @@ namespace Edgar.Pipeline
             _downloader = new FilingDownloader(_edgarClient, _appSettings);
 
             _dictionaryScorer = new LmDictionaryScorer(_appSettings);
+            _llmDictionaryScorer = new LlmScorer();
 
             _db = new Database.MongoDB(_appSettings.DefaultLocalHost, _appSettings.DefaultEdgarDbName);
         }
 
-        public async Task RunAsync(CancellationToken ct = default)
+        public async Task RunAsync(CancellationToken ct = default, bool skipDb = false, bool extractFromFile = false)
         {
             foreach (var year in Years)
             {
                 ct.ThrowIfCancellationRequested();
-                await ProcessFilingForYearAsync(year, ct);
+                await ProcessFilingForYearAsync(year, ct, skipDb, extractFromFile);
             }
         }
 
-        private async Task ProcessFilingForYearAsync(int year, CancellationToken ct = default)
+        private async Task ProcessFilingForYearAsync(int year, CancellationToken ct = default, bool skipDb = false, bool extractFromFile = false)
         {
             _logger.LogInformation("----- EDGAR PROCESS YEAR {Year} -----", year);
 
@@ -116,7 +123,7 @@ namespace Edgar.Pipeline
                         continue;
                     }
 
-                    ExtractedSections extractedSections = await ProcessFilingAsync(yearKey, filing, ct);
+                    ExtractedSections extractedSections = await ProcessFilingAsync(yearKey, filing, ct, extractFromFile);
 
                     var filterProcess = FilterProcess.Process(filing, extractedSections, tradingDays, bookToMarket);
 
@@ -129,6 +136,15 @@ namespace Edgar.Pipeline
                     prevTradingDays.AddRange(tradingDays);
                     tradingDays.AddRange(afterTradingDays);
 
+                    var scoresItem1A = _dictionaryScorer.Score(extractedSections.Item1AText);
+                    var scoresItem7 = _dictionaryScorer.Score(extractedSections.Item7Text);
+
+                    if (skipDb) 
+                    {
+                        continue;
+                    }
+
+
                     FirmYearRegressionPanelDocument firmYearRegressionPanelDocument = new FirmYearRegressionPanelDocument
                     {
                         Cik = filing.CIK,
@@ -136,16 +152,18 @@ namespace Edgar.Pipeline
                         Gvkey = bookToMarket.Gvkey,
                         FilingDate = filing.DateFiled,
                         Sic = bookToMarket.Sic,
-                        ScoresItem1A = _dictionaryScorer.Score(extractedSections.Item1AText),
-                        ScoresItem7 = _dictionaryScorer.Score(extractedSections.Item7Text),
+                        ScoresItem1A = scoresItem1A,
+                        ScoresItem7 = scoresItem7,
+                        //LlmScoresItem1A = lLmScoresItem1A,
+                        //LlmScoresItem7 = lLmScoresItem7,
 
-                        PriorReturn = Utilities.TradingDaysCalculations.PriorReturn(prevTradingDays, filing.DateFiled),
-                        Volatility = Utilities.TradingDaysCalculations.RealizedVolatility(prevTradingDays, filing.DateFiled),
-                        RealizedVariance = Utilities.TradingDaysCalculations.RealizedVariance(prevTradingDays, filing.DateFiled),
-                        Turnover = Utilities.TradingDaysCalculations.CumulativeTurnover(prevTradingDays, filing.DateFiled),
-                        TurnoverAvg = Utilities.TradingDaysCalculations.AverageTurnover(prevTradingDays, filing.DateFiled),
-                        FilingDayReturn = Utilities.TradingDaysCalculations.FilingDayReturn(prevTradingDays, filing.DateFiled),
-                        EventPeriodExcessReturn = Utilities.TradingDaysCalculations.Return4Days(tradingDays, filing.DateFiled),
+                        PriorReturn = Maths.Round(TradingDaysCalculations.PriorReturn(prevTradingDays, filing.DateFiled)),
+                        Volatility = Maths.Round(TradingDaysCalculations.RealizedVolatility(prevTradingDays, filing.DateFiled)),
+                        RealizedVariance = Maths.Round(TradingDaysCalculations.RealizedVariance(prevTradingDays, filing.DateFiled)),
+                        Turnover = Maths.Round(TradingDaysCalculations.CumulativeTurnover(prevTradingDays, filing.DateFiled)),
+                        TurnoverAvg = Maths.Round(TradingDaysCalculations.AverageTurnover(prevTradingDays, filing.DateFiled)),
+                        FilingDayReturn = Maths.Round(TradingDaysCalculations.FilingDayReturn(prevTradingDays, filing.DateFiled)),
+                        EventPeriodExcessReturn = Maths.Round(TradingDaysCalculations.Return4Days(tradingDays, filing.DateFiled)),
 
                         LossProvisionsT1 = bookToMarket.LossProvision,
                         LossProvisionsRawT1 = bookToMarket.LossProvisionRaw,
@@ -168,11 +186,6 @@ namespace Edgar.Pipeline
                         PreTaxIncome = bookToMarket.PretaxIncome,
                         LongTermDebt = bookToMarket.PretaxIncome,
 
-                        // from Compustat BANK
-                        TotalLoansNet = 0,
-                        LoanLossReserves = 0,
-
-                        TextModelVersion = "",
                         UpdatedAt = DateTime.UtcNow
                     };
 
@@ -246,7 +259,7 @@ namespace Edgar.Pipeline
             return bookToMarkets;
         }
 
-        private async Task<ExtractedSections> ProcessFilingAsync(string yearKey, Filing filing, CancellationToken ct)
+        private async Task<ExtractedSections> ProcessFilingAsync(string yearKey, Filing filing, CancellationToken ct, bool extractFromFile)
         {
             LogCik(filing.CIK, "Downloading filing HTML (cached if available)");
 
@@ -255,13 +268,19 @@ namespace Edgar.Pipeline
             // 10-K must contain > 2,000 words (fullfilled other way)
             var htmlPath = await _downloader.GetOrDownloadPrimaryDocAsync(yearKey, filing);
 
+            if (extractFromFile)
+            {
+                LogCik(filing.CIK, "Extracting sections from previously extracted text files");
+                return _extractor.ExtractFile(Path.GetDirectoryName(htmlPath) ?? "");
+            }
+
             LogCik(filing.CIK, "Reading HTML from {HtmlPath}", htmlPath);
             var html = await File.ReadAllTextAsync(htmlPath);
 
             LogCik(filing.CIK, "Cleaning + extracting sections");
             var cleanedText = HtmlCleaner.HtmlToText(html);
 
-            return _extractor.Extract(cleanedText, true);
+            return _extractor.Extract(cleanedText, true, Path.GetDirectoryName(htmlPath) ?? "");
         }
 
         // ---------- Logging helpers (CIK first, always) ----------

@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Edgar": {
+      "commandName": "Project",
+      "commandLineArgs": "extractFromFile=true"
+    }
+  }
+}

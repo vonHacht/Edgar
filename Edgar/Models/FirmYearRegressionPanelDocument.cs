@@ -54,6 +54,12 @@ namespace Edgar.Models
         [BsonElement("scores_item7")]
         public required DictionaryScores ScoresItem7 { get; set; }
 
+        //[BsonElement("llm_scores_item1A")]
+        //public required LLmScores LlmScoresItem1A { get; set; }
+
+        //[BsonElement("llm_scores_item7")]
+        //public required LLmScores LlmScoresItem7 { get; set; }
+
         /// <summary>
         /// Firm size control, typically log market capitalization.
         /// </summary>
@@ -199,20 +205,6 @@ namespace Edgar.Models
         public required double LoanLossReservesR { get; set; }
 
         /// <summary>
-        /// Loan loss reserves.
-        /// Compustat Bank mnemonic: LLR
-        /// </summary>
-        [BsonElement("loan_loss_reserves")]
-        public required double LoanLossReserves { get; set; }
-
-        /// <summary>
-        /// Total loans, net.
-        /// Compustat Bank mnemonic: LNTAL
-        /// </summary>
-        [BsonElement("total_loans_net")]
-        public required double TotalLoansNet { get; set; }
-
-        /// <summary>
         /// Raw future loss provisions in year t+1.
         /// Stored for traceability before scaling.
         /// </summary>
@@ -225,12 +217,6 @@ namespace Edgar.Models
         /// </summary>
         [BsonElement("loss_provisions_t1")]
         public required double LossProvisionsT1 { get; set; }
-
-        /// <summary>
-        /// Version of your text-scoring pipeline or prompt version.
-        /// </summary>
-        [BsonElement("text_model_version")]
-        public required string TextModelVersion { get; set; }
 
         /// <summary>
         /// Timestamp for data lineage and reprocessing.
