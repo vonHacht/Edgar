@@ -34,6 +34,29 @@ namespace Edgar.Utilities
                 : Array.Empty<FirmTradingDay>();
         }
 
+        private static IReadOnlyList<FirmTradingDay> GetPostFilingTradingDays(List<FirmTradingDay> tradingDays, DateTime filingDate, int d)
+        {
+            if (d != 60 && d != 90)
+                throw new NotSupportedException("Only 60-day and 90-day windows are supported.");
+
+            if (tradingDays == null || tradingDays.Count == 0)
+                return Array.Empty<FirmTradingDay>();
+
+            var orderedDays = tradingDays
+                .OrderBy(x => x.Date)
+                .ToList();
+
+            // Strictly after filing date
+            var postDays = orderedDays
+                .Where(x => x.Date > filingDate)
+                .Take(d)
+                .ToList();
+
+            return postDays.Count == d
+                ? postDays
+                : Array.Empty<FirmTradingDay>();
+        }
+
         public static decimal PriorReturn(List<FirmTradingDay> TradingDays, DateTime date, int d = 60)
         {
             var priorDays = GetPriorTradingDays(TradingDays, date, d);
@@ -60,6 +83,23 @@ namespace Edgar.Utilities
             decimal rv = 0m;
 
             foreach (var day in priorDays)
+            {
+                var r = (decimal)(day.Ret ?? 0.0);
+                rv += r * r;
+            }
+
+            return rv;
+        }
+
+        public static decimal RealizedVarianceAfterFiling(List<FirmTradingDay> tradingDays, DateTime filingDate, int d = 60)
+        {
+            var postDays = GetPostFilingTradingDays(tradingDays, filingDate, d);
+            if (postDays.Count == 0)
+                return 0m;
+
+            decimal rv = 0m;
+
+            foreach (var day in postDays)
             {
                 var r = (decimal)(day.Ret ?? 0.0);
                 rv += r * r;
@@ -132,10 +172,6 @@ namespace Edgar.Utilities
                     hi = mid - 1;
             }
 
-            // After loop:
-            // hi = closest smaller
-            // lo = closest larger
-
             if (lo >= tradingDays.Count)
                 return tradingDays[hi];
 
@@ -176,7 +212,6 @@ namespace Edgar.Utilities
                 }
             }
 
-            // Need 4 trading days: t = 0,1,2,3
             if (startIndex == -1 || startIndex + 4 > tradingDays.Count)
                 return 0m;
 
@@ -191,17 +226,13 @@ namespace Edgar.Utilities
                 decimal rMarket = (decimal)(day.ValueWeightedReturnIncludingDividends ?? 0.0);
                 decimal dlret = (decimal)(day.DelistRet ?? 0.0);
 
-                // Firm side: (1 + r_firm,t)(1 + dlret_t)
                 firmCompounded *= (1m + rFirm) * (1m + dlret);
-
-                // Market side: (1 + r_market,t)
                 marketCompounded *= (1m + rMarket);
             }
 
             decimal firmReturn = firmCompounded - 1m;
             decimal marketReturn = marketCompounded - 1m;
 
-            // Formula multiplies by 100
             return 100m * (firmReturn - marketReturn);
         }
     }

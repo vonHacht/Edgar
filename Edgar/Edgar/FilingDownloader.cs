@@ -50,6 +50,16 @@ namespace Edgar.Edgar
             return localPath;
         }
 
+        public string BuildDirectoryPath(string year, Filing filing) 
+        {
+            var cikNoZeros = NormalizeCikForArchivePath(filing.CIK);
+
+            var accNumNoDashes = Accession.GetAccessionFromFilename(filing.Filename, true);
+            var accNumDashed = Accession.GetAccessionFile(filing.Filename);
+
+            return Path.Combine(_settings.RawDir, year, filing.CIK, accNumNoDashes);
+        }
+
         // https://www.sec.gov/Archives/edgar/data/1385329/00010629931000002/0001062993-10-000002.txt
         public static string BuildPrimaryDocUrl(string cikNoZeros, string accNumNoDashes, string accNumDashed)
         {

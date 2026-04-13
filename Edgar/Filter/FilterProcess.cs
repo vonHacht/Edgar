@@ -5,7 +5,6 @@ namespace Edgar.Filter
     public static class FilterProcess
     {
         public static string Process(Filing filing,
-            ExtractedSections sections,
             List<FirmTradingDay> ftd,
             BookToMarket btm)
         {

@@ -1,4 +1,5 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.Text;
+using System.Text.RegularExpressions;
 
 using Edgar.Models;
 
@@ -46,20 +47,55 @@ namespace Edgar.Parsing
             @"(?is)\bitem\s*\d+\s*[a-z]?\b",
             RegexOptions.Compiled);
 
-        public ExtractedSections ExtractFile(string directoryName) 
-        {
-            string text7 = File.ReadAllText(Path.Combine(directoryName, FilenameItem7));
+        public ExtractedSections ExtractFile(string directoryName)
+        { 
+            string item7Path = Path.Combine(directoryName, FilenameItem7);
+            string item1APath = Path.Combine(directoryName, FilenameItem1A);
 
-            string text1A = File.ReadAllText(Path.Combine(directoryName, FilenameItem1A));
+            string text7 = ReadTextIfExists(item7Path);
+            string text1A = ReadTextIfExists(item1APath);
 
             return new ExtractedSections
             {
-                FoundItem1A = text1A.Length > 0,
-                FoundItem7 = text7.Length > 0,
+                FoundItem1A = !string.IsNullOrWhiteSpace(text1A),
+                FoundItem7 = !string.IsNullOrWhiteSpace(text7),
                 ExtractionMethodVersion = "v1-file",
                 Item1AText = text1A,
                 Item7Text = text7,
             };
+        }
+
+        private static string ReadTextIfExists(string path)
+        {
+            if (!File.Exists(path))
+                return string.Empty;
+
+            try
+            {
+                // UTF-8 is a sensible default for your own extracted files.
+                var text = File.ReadAllText(path, Encoding.UTF8);
+
+                return NormalizeExtractedText(text);
+            }
+            catch (IOException)
+            {
+                return string.Empty;
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return string.Empty;
+            }
+        }
+
+        private static string NormalizeExtractedText(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+                return string.Empty;
+
+            return text
+                .Replace("\r\n", "\n")
+                .Replace("\r", "\n")
+                .Trim();
         }
 
         public ExtractedSections Extract(string cleanedText, bool extractItem7, string directoryName = "")

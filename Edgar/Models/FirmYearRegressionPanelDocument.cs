@@ -105,6 +105,9 @@ namespace Edgar.Models
         [BsonElement("realized_variance")]
         public required decimal RealizedVariance { get; set; }
 
+        [BsonElement("realized_variance_days_after")]
+        public required decimal RealizedVarianceDaysAfter { get; set; }
+
         [BsonElement("turnover")]
         public required decimal Turnover { get; set; }
 

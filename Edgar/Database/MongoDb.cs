@@ -37,5 +37,20 @@ namespace Edgar.Database
 
             await collection.ReplaceOneAsync(filter, document, options);
         }
+
+        public async Task<bool> FirmYearRegressionPanelDocumentExists(
+            int year, int permno, string cik, string gvkey)
+        {
+            var collection = _database.GetCollection<FirmYearRegressionPanelDocument>(year.ToString());
+
+            var filter = Builders<FirmYearRegressionPanelDocument>.Filter.And(
+                Builders<FirmYearRegressionPanelDocument>.Filter.Eq(x => x.Permno, permno),
+                Builders<FirmYearRegressionPanelDocument>.Filter.Eq(x => x.Cik, cik),
+                Builders<FirmYearRegressionPanelDocument>.Filter.Eq(x => x.Gvkey, gvkey)
+            );
+
+            // Efficient: stops as soon as it finds one match
+            return await collection.Find(filter).Limit(1).AnyAsync();
+        }
     }
 }
